@@ -51,35 +51,46 @@ function HeaderContent({ showNav = true, variant = 'default' }: HeaderProps) {
     };
 
     return (
-        <header className="border-b border-border glass sticky top-0 z-50">
+        <header className="border-b border-white/5 glass sticky top-0 z-50 backdrop-blur-xl">
             <nav className="container mx-auto px-6 py-4 flex items-center justify-between">
                 {/* Logo */}
-                <Link href="/" className="flex items-center gap-2">
-                    <div className="w-10 h-10 gradient-primary rounded-lg flex items-center justify-center">
+                <Link href="/" className="flex items-center gap-3 group">
+                    <div className="w-11 h-11 gradient-primary-animated rounded-xl flex items-center justify-center shadow-lg shadow-primary/30 group-hover:shadow-primary/50 transition-shadow">
                         <span className="text-white font-bold text-xl">₳</span>
                     </div>
-                    <h1 className="text-2xl font-bold">DonateDAO</h1>
+                    <div>
+                        <h1 className="text-2xl font-bold group-hover:text-gradient transition-all">DonateDAO</h1>
+                        <p className="text-[10px] text-foreground/40 -mt-1">Cardano Donations</p>
+                    </div>
                 </Link>
 
                 {/* Navigation */}
                 {showNav && variant === 'default' && (
-                    <div className="hidden md:flex items-center gap-8">
-                        <Link href="/campaigns" className="hover:text-primary transition-colors">
+                    <div className="hidden md:flex items-center gap-2">
+                        <Link href="/campaigns" className="px-4 py-2 rounded-lg hover:bg-white/5 hover:text-primary transition-all font-medium">
                             Campaigns
                         </Link>
-                        <Link href="/governance" className="hover:text-primary transition-colors">
+                        {!isAuthenticated && (
+                            <Link 
+                                href="/campaigns" 
+                                className="btn-primary px-4 py-2 text-sm"
+                            >
+                                💝 Donate Now
+                            </Link>
+                        )}
+                        <Link href="/governance" className="px-4 py-2 rounded-lg hover:bg-white/5 hover:text-primary transition-all font-medium">
                             Governance
                         </Link>
                         {isAuthenticated && (
                             <>
-                                <Link href="/my-campaigns" className="hover:text-primary transition-colors">
+                                <Link href="/my-campaigns" className="px-4 py-2 rounded-lg hover:bg-white/5 hover:text-primary transition-all font-medium">
                                     My Campaigns
                                 </Link>
-                                <Link href="/dashboard" className="hover:text-primary transition-colors">
+                                <Link href="/dashboard" className="px-4 py-2 rounded-lg hover:bg-white/5 hover:text-primary transition-all font-medium">
                                     Dashboard
                                 </Link>
-                                <Link href="/create" className="hover:text-primary transition-colors font-semibold text-accent">
-                                    + Create
+                                <Link href="/create" className="ml-2 btn-primary px-4 py-2 text-sm flex items-center gap-1">
+                                    <span>+</span> Create
                                 </Link>
                             </>
                         )}
@@ -93,15 +104,18 @@ function HeaderContent({ showNav = true, variant = 'default' }: HeaderProps) {
                         <div className="relative">
                             <button
                                 onClick={() => setShowProfileMenu(!showProfileMenu)}
-                                className="flex items-center gap-3 glass px-4 py-2 rounded-lg hover:bg-white/10 transition-colors"
+                                className="flex items-center gap-3 glass-hover px-3 py-2 rounded-xl"
                             >
-                                <span className="text-xl">{profile.avatar}</span>
+                                <div className="relative">
+                                    <span className="text-2xl">{profile.avatar}</span>
+                                    <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-accent border-2 border-background" />
+                                </div>
                                 <div className="hidden sm:block text-left">
-                                    <p className="text-sm font-medium">{profile.displayName}</p>
-                                    <p className="text-xs text-foreground/60">{balance.toFixed(2)} ₳</p>
+                                    <p className="text-sm font-semibold">{profile.displayName}</p>
+                                    <p className="text-xs text-primary font-medium">{balance.toFixed(2)} ₳</p>
                                 </div>
                                 <svg
-                                    className={`w-4 h-4 transition-transform ${showProfileMenu ? 'rotate-180' : ''}`}
+                                    className={`w-4 h-4 transition-transform duration-300 ${showProfileMenu ? 'rotate-180' : ''}`}
                                     fill="none"
                                     viewBox="0 0 24 24"
                                     stroke="currentColor"
@@ -112,72 +126,58 @@ function HeaderContent({ showNav = true, variant = 'default' }: HeaderProps) {
 
                             {/* Profile Dropdown */}
                             {showProfileMenu && (
-                                <div className="absolute right-0 mt-2 w-56 glass rounded-xl overflow-hidden shadow-xl">
-                                    <div className="p-4 border-b border-border">
-                                        <p className="font-medium">{profile.displayName}</p>
-                                        <p className="text-sm text-foreground/60 font-mono">
-                                            {formatWalletAddress(12)}
-                                        </p>
+                                <div className="absolute right-0 mt-3 w-64 glass rounded-2xl overflow-hidden shadow-2xl border border-white/10 animate-scale-in">
+                                    <div className="p-4 bg-gradient-to-br from-primary/10 to-secondary/10 border-b border-white/5">
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-3xl">{profile.avatar}</span>
+                                            <div>
+                                                <p className="font-bold">{profile.displayName}</p>
+                                                <p className="text-xs text-foreground/50 font-mono">
+                                                    {formatWalletAddress(12)}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="mt-3 flex items-center gap-2">
+                                            <span className="badge badge-primary text-xs">{balance.toFixed(2)} ₳</span>
+                                            <span className="badge badge-accent text-xs">Verified</span>
+                                        </div>
                                     </div>
                                     
                                     <div className="py-2">
-                                        <Link
-                                            href="/profile"
-                                            className="flex items-center gap-3 px-4 py-2 hover:bg-white/10 transition-colors"
-                                            onClick={() => setShowProfileMenu(false)}
-                                        >
-                                            <span>👤</span>
-                                            <span>My Profile</span>
-                                        </Link>
-                                        <Link
-                                            href="/dashboard"
-                                            className="flex items-center gap-3 px-4 py-2 hover:bg-white/10 transition-colors"
-                                            onClick={() => setShowProfileMenu(false)}
-                                        >
-                                            <span>📊</span>
-                                            <span>Dashboard</span>
-                                        </Link>
-                                        <Link
-                                            href="/my-campaigns"
-                                            className="flex items-center gap-3 px-4 py-2 hover:bg-white/10 transition-colors"
-                                            onClick={() => setShowProfileMenu(false)}
-                                        >
-                                            <span>🎯</span>
-                                            <span>My Campaigns</span>
-                                        </Link>
-                                        <Link
-                                            href="/profile?tab=transactions"
-                                            className="flex items-center gap-3 px-4 py-2 hover:bg-white/10 transition-colors"
-                                            onClick={() => setShowProfileMenu(false)}
-                                        >
-                                            <span>📜</span>
-                                            <span>Transaction History</span>
-                                        </Link>
-                                        <Link
-                                            href="/create"
-                                            className="flex items-center gap-3 px-4 py-2 hover:bg-white/10 transition-colors"
-                                            onClick={() => setShowProfileMenu(false)}
-                                        >
-                                            <span>➕</span>
-                                            <span>Create Campaign</span>
-                                        </Link>
+                                        {[
+                                            { href: '/profile', icon: '👤', label: 'My Profile', color: 'primary' },
+                                            { href: '/dashboard', icon: '📊', label: 'Dashboard', color: 'secondary' },
+                                            { href: '/my-campaigns', icon: '🎯', label: 'My Campaigns', color: 'accent' },
+                                            { href: '/profile?tab=transactions', icon: '📜', label: 'Transactions', color: 'primary' },
+                                            { href: '/create', icon: '✨', label: 'Create Campaign', color: 'accent', highlight: true },
+                                        ].map((item) => (
+                                            <Link
+                                                key={item.href}
+                                                href={item.href}
+                                                className={`flex items-center gap-3 px-4 py-2.5 hover:bg-white/5 transition-all group ${item.highlight ? 'bg-accent/10' : ''}`}
+                                                onClick={() => setShowProfileMenu(false)}
+                                            >
+                                                <span className="text-lg group-hover:scale-110 transition-transform">{item.icon}</span>
+                                                <span className={`font-medium ${item.highlight ? 'text-accent' : ''}`}>{item.label}</span>
+                                            </Link>
+                                        ))}
                                     </div>
 
-                                    <div className="border-t border-border py-2">
+                                    <div className="border-t border-white/5 py-2">
                                         <Link
                                             href="/profile?tab=settings"
-                                            className="flex items-center gap-3 px-4 py-2 hover:bg-white/10 transition-colors"
+                                            className="flex items-center gap-3 px-4 py-2.5 hover:bg-white/5 transition-all group"
                                             onClick={() => setShowProfileMenu(false)}
                                         >
-                                            <span>⚙️</span>
-                                            <span>Settings</span>
+                                            <span className="text-lg group-hover:animate-spin-slow">⚙️</span>
+                                            <span className="font-medium">Settings</span>
                                         </Link>
                                         <button
                                             onClick={handleDisconnect}
-                                            className="flex items-center gap-3 px-4 py-2 w-full text-left hover:bg-white/10 transition-colors text-red-400"
+                                            className="flex items-center gap-3 px-4 py-2.5 w-full text-left hover:bg-red-500/10 transition-all text-red-400 group"
                                         >
-                                            <span>🚪</span>
-                                            <span>Disconnect</span>
+                                            <span className="text-lg group-hover:translate-x-1 transition-transform">🚪</span>
+                                            <span className="font-medium">Disconnect</span>
                                         </button>
                                     </div>
                                 </div>
@@ -196,15 +196,20 @@ function HeaderContent({ showNav = true, variant = 'default' }: HeaderProps) {
                                 <button
                                     onClick={() => setShowWalletMenu(!showWalletMenu)}
                                     disabled={isLoading}
-                                    className="gradient-primary px-6 py-2.5 rounded-lg font-semibold text-white hover:opacity-90 transition-opacity disabled:opacity-50"
+                                    className="btn-primary px-5 py-2.5 flex items-center gap-2"
                                 >
                                     {isLoading ? (
-                                        <span className="flex items-center gap-2">
+                                        <>
                                             <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                                             Connecting...
-                                        </span>
+                                        </>
                                     ) : (
-                                        'Connect Wallet'
+                                        <>
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                                            </svg>
+                                            Connect Wallet
+                                        </>
                                     )}
                                 </button>
 
@@ -229,9 +234,9 @@ function HeaderContent({ showNav = true, variant = 'default' }: HeaderProps) {
 
                                 {/* Wallet Selection Dropdown */}
                                 {showWalletMenu && availableWallets.length > 0 && !connectionError && (
-                                    <div className="absolute right-0 mt-2 w-64 glass rounded-xl overflow-hidden shadow-xl">
-                                        <div className="p-3 border-b border-border">
-                                            <p className="text-sm font-medium">Select Wallet</p>
+                                    <div className="absolute right-0 mt-3 w-72 glass rounded-2xl overflow-hidden shadow-2xl border border-white/10 animate-scale-in">
+                                        <div className="p-4 bg-gradient-to-br from-primary/10 to-transparent border-b border-white/5">
+                                            <p className="font-bold">Select Your Wallet</p>
                                             <p className="text-xs text-foreground/50 mt-1">Make sure your wallet is unlocked</p>
                                         </div>
                                         <div className="py-2">
@@ -240,17 +245,22 @@ function HeaderContent({ showNav = true, variant = 'default' }: HeaderProps) {
                                                     key={wallet.name}
                                                     onClick={() => handleConnect(wallet.name)}
                                                     disabled={isLoading}
-                                                    className="flex items-center gap-3 px-4 py-3 w-full hover:bg-white/10 transition-colors disabled:opacity-50"
+                                                    className="flex items-center gap-4 px-4 py-3 w-full hover:bg-white/5 transition-all disabled:opacity-50 group"
                                                 >
-                                                    <img
-                                                        src={wallet.icon}
-                                                        alt={wallet.name}
-                                                        className="w-8 h-8 rounded-lg"
-                                                    />
-                                                    <div className="text-left">
-                                                        <p className="font-medium capitalize">{wallet.name}</p>
+                                                    <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center group-hover:scale-110 transition-transform overflow-hidden">
+                                                        <img
+                                                            src={wallet.icon}
+                                                            alt={wallet.name}
+                                                            className="w-8 h-8"
+                                                        />
+                                                    </div>
+                                                    <div className="text-left flex-1">
+                                                        <p className="font-semibold capitalize">{wallet.name}</p>
                                                         <p className="text-xs text-foreground/50">v{wallet.version}</p>
                                                     </div>
+                                                    <svg className="w-5 h-5 text-foreground/30 group-hover:text-primary group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                                    </svg>
                                                 </button>
                                             ))}
                                         </div>
@@ -258,27 +268,34 @@ function HeaderContent({ showNav = true, variant = 'default' }: HeaderProps) {
                                 )}
 
                                 {showWalletMenu && availableWallets.length === 0 && !connectionError && (
-                                    <div className="absolute right-0 mt-2 w-64 glass rounded-xl p-4 shadow-xl">
-                                        <p className="text-sm text-foreground/70 mb-3">
-                                            No wallet found. Install one to continue:
-                                        </p>
-                                        <div className="space-y-2">
-                                            <a
-                                                href="https://namiwallet.io"
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="block text-sm text-primary hover:underline"
-                                            >
-                                                → Nami Wallet
-                                            </a>
-                                            <a
-                                                href="https://eternl.io"
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="block text-sm text-primary hover:underline"
-                                            >
-                                                → Eternl Wallet
-                                            </a>
+                                    <div className="absolute right-0 mt-3 w-72 glass rounded-2xl overflow-hidden shadow-2xl border border-white/10 animate-scale-in">
+                                        <div className="p-4 bg-gradient-to-br from-warning/10 to-transparent border-b border-white/5">
+                                            <p className="font-bold flex items-center gap-2">
+                                                <span>⚠️</span> No Wallet Found
+                                            </p>
+                                        </div>
+                                        <div className="p-4 space-y-3">
+                                            <p className="text-sm text-foreground/60">
+                                                Install a Cardano wallet to continue:
+                                            </p>
+                                            {[
+                                                { name: 'Nami', url: 'https://namiwallet.io', desc: 'Simple & Fast' },
+                                                { name: 'Eternl', url: 'https://eternl.io', desc: 'Advanced Features' },
+                                            ].map((w) => (
+                                                <a
+                                                    key={w.name}
+                                                    href={w.url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group"
+                                                >
+                                                    <div>
+                                                        <p className="font-semibold">{w.name}</p>
+                                                        <p className="text-xs text-foreground/50">{w.desc}</p>
+                                                    </div>
+                                                    <span className="text-primary group-hover:translate-x-1 transition-transform">→</span>
+                                                </a>
+                                            ))}
                                         </div>
                                     </div>
                                 )}
@@ -286,8 +303,11 @@ function HeaderContent({ showNav = true, variant = 'default' }: HeaderProps) {
 
                             <Link
                                 href="/auth"
-                                className="hidden sm:block glass px-4 py-2.5 rounded-lg font-medium hover:bg-white/10 transition-colors"
+                                className="hidden sm:flex items-center gap-2 glass-hover px-4 py-2.5 rounded-xl font-medium"
                             >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
                                 Sign In
                             </Link>
                         </div>

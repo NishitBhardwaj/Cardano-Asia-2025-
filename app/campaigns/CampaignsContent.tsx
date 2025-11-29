@@ -54,12 +54,12 @@ function CampaignsPageInner() {
     };
 
     return (
-        <div className="min-h-screen bg-background">
+        <div className="min-h-screen bg-background bg-pattern-dots">
             <Header />
 
             <div className="container mx-auto px-6 py-12">
                 {/* Page Header */}
-                <div className="mb-12">
+                <div className="mb-12 bg-gradient-radial">
                     <h1 className="text-5xl font-bold mb-4">Explore Campaigns</h1>
                     <p className="text-xl text-foreground/70">
                         Discover and support community initiatives on Cardano
@@ -152,14 +152,22 @@ function CampaignsPageInner() {
                                 className="glass rounded-xl overflow-hidden hover:scale-[1.02] transition-transform"
                             >
                                 {/* Image/Icon */}
-                                <div className="h-40 gradient-primary flex items-center justify-center">
-                                    <span className="text-6xl">{campaign.image || categoryEmojis[campaign.category] || '📋'}</span>
+                                <div className="h-40 gradient-primary flex items-center justify-center overflow-hidden">
+                                    {campaign.image && campaign.image.startsWith('data:image') ? (
+                                        <img 
+                                            src={campaign.image} 
+                                            alt={campaign.title}
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : (
+                                        <span className="text-6xl">{campaign.image || categoryEmojis[campaign.category] || '📋'}</span>
+                                    )}
                                 </div>
 
                                 {/* Content */}
                                 <div className="p-6">
                                     {/* Category Badge */}
-                                    <div className="flex items-center gap-2 mb-3">
+                                    <div className="flex items-center gap-2 mb-3 flex-wrap">
                                         <span className="px-2 py-1 text-xs rounded-full bg-white/10">
                                             {categoryEmojis[campaign.category]} {campaign.category}
                                         </span>
@@ -170,6 +178,21 @@ function CampaignsPageInner() {
                                         }`}>
                                             {campaign.status}
                                         </span>
+                                        {campaign.campaignMode === 'hydra-event' && (
+                                            <span className="px-2 py-1 text-xs rounded-full bg-primary/20 text-primary font-medium flex items-center gap-1">
+                                                ⚡ Hydra
+                                            </span>
+                                        )}
+                                        {campaign.campaignMode === 'long-campaign' && (
+                                            <span className="px-2 py-1 text-xs rounded-full bg-blue-500/20 text-blue-400">
+                                                📅 Long
+                                            </span>
+                                        )}
+                                        {campaign.campaignMode === 'small-campaign' && (
+                                            <span className="px-2 py-1 text-xs rounded-full bg-purple-500/20 text-purple-400">
+                                                💎 Small
+                                            </span>
+                                        )}
                                     </div>
 
                                     {/* Title */}

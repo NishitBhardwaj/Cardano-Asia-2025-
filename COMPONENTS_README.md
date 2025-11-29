@@ -6,6 +6,48 @@
 
 ---
 
+## 🎯 Quick Reference for Beginners
+
+**New to this codebase?** Here's what each major feature does:
+
+### Pages (What Users See)
+
+| Page | URL | What It Does |
+|------|-----|--------------|
+| Home | `/` | Landing page with intro and featured campaigns |
+| Campaigns | `/campaigns` | Browse all fundraising campaigns |
+| Campaign Detail | `/campaigns/[id]` | View single campaign, donate, manage admins |
+| Create | `/create` | Create a new fundraising campaign |
+| Profile | `/profile` | View your account, transactions, settings |
+| Login | `/auth/login` | Sign in with email/password |
+| Signup | `/auth/signup` | Create new account with email |
+| Auth | `/auth` | Connect wallet or choose login method |
+| Forgot Password | `/auth/forgot-password` | Reset password using OTP |
+| Verify Identity | `/auth/verify-identity` | Upload ID document for verification |
+| Public Donate | `/donate/[id]` | Donate without account (wallet only) |
+
+### Key Components (Building Blocks)
+
+| Component | What It Does |
+|-----------|--------------|
+| `Header` | Top navigation bar with login/wallet buttons |
+| `Chatbot` | AI assistant that answers questions |
+| `QRCodeGenerator` | Creates downloadable QR codes for campaigns |
+| `ImageUpload` | Handles image selection and compression |
+| `TwoFactorSetup` | Sets up Google Authenticator 2FA |
+| `DocumentVerification` | Handles ID verification flow |
+| `AdminManagement` | Add/remove campaign admins, sharing links |
+
+### Data Storage (Where Info Lives)
+
+| Store | What It Stores |
+|-------|----------------|
+| `userStore` | User profile, login state, transactions |
+| `campaignStore` | All campaigns, donations, admin lists |
+| `localStorage` | Chat history, 2FA data, OTP codes |
+
+---
+
 ## 📋 Table of Contents
 
 - [Getting Started](#getting-started)
@@ -269,12 +311,17 @@ All page.tsx files follow the same pattern:
 |------|-------|-------------------|
 | `app/page.tsx` | `/` | `HomeWalletSection.tsx` |
 | `app/auth/page.tsx` | `/auth` | `AuthContent.tsx` |
+| `app/auth/login/page.tsx` | `/auth/login` | `LoginContent.tsx` |
+| `app/auth/signup/page.tsx` | `/auth/signup` | `SignupContent.tsx` |
+| `app/auth/verify-email/page.tsx` | `/auth/verify-email` | `VerifyEmailContent.tsx` |
 | `app/profile/page.tsx` | `/profile` | `Content.tsx` |
 | `app/campaigns/page.tsx` | `/campaigns` | `CampaignsContent.tsx` |
 | `app/campaigns/[id]/page.tsx` | `/campaigns/:id` | `Content.tsx` |
 | `app/campaigns/[id]/edit/page.tsx` | `/campaigns/:id/edit` | `Content.tsx` |
 | `app/campaigns/[id]/withdraw/page.tsx` | `/campaigns/:id/withdraw` | `Content.tsx` |
+| `app/campaigns/[id]/admin-invite/page.tsx` | `/campaigns/:id/admin-invite` | `AdminInviteContent.tsx` |
 | `app/create/page.tsx` | `/create` | `Content.tsx` |
+| `app/donate/[id]/page.tsx` | `/donate/:id` | `DonateContent.tsx` |
 | `app/governance/page.tsx` | `/governance` | `Content.tsx` |
 | `app/admin/page.tsx` | `/admin` | `Content.tsx` |
 | `app/dashboard/page.tsx` | `/dashboard` | `Content.tsx` |
@@ -298,8 +345,40 @@ All page.tsx files follow the same pattern:
 
 **Features**:
 - Wallet detection and connection
+- Email/Password authentication option
 - Profile creation on first connect
 - Redirect to profile after auth
+- Wallet info modal for adding email
+
+### LoginContent.tsx
+**Purpose**: Email/password login
+
+**Features**:
+- Email and password form
+- Form validation
+- Error handling
+- Redirect to profile after login
+
+### SignupContent.tsx
+**Purpose**: User registration with email
+
+**Features**:
+- First name, last name, username fields
+- Email and password fields
+- Password confirmation
+- Custom captcha verification
+- Form validation
+- Password strength requirements
+- Redirect to profile after signup
+
+### VerifyEmailContent.tsx
+**Purpose**: Email verification handler
+
+**Features**:
+- Token-based verification
+- Verification status display
+- Auto-redirect after verification
+- Error handling for expired tokens
 
 ### CampaignsContent.tsx
 **Purpose**: Browse and filter campaigns
@@ -315,11 +394,15 @@ All page.tsx files follow the same pattern:
 
 **Features**:
 - Edit profile (display name, avatar)
+- Email verification status and button
+- Link wallet option (for email users)
+- Disconnect wallet option
 - Transaction history
 - Data visualization (Recharts)
 - Created campaigns list
 - Supported campaigns list
 - Voting power display
+- Settings tab with account management
 
 ### Create Content.tsx
 **Purpose**: Campaign creation form
@@ -331,16 +414,56 @@ All page.tsx files follow the same pattern:
 - Category
 - Goal amount (ADA)
 - Deadline
+- **Campaign Mode** (NEW):
+  - Normal Mode (default): Standard L1 transactions
+  - Hydra Event Mode: ⚡ Fast donations via Hydra Head
+  - Long Campaign Mode: Extended duration campaigns
+  - Small Campaign Mode: Quick campaigns with smaller goals
 
 ### Campaign Detail Content.tsx
 **Purpose**: Full campaign view with donation
 
 **Features**:
 - Campaign info display
-- Donation form
+- **Campaign Mode Indicators**: Badges showing Normal, Hydra Event, Long, or Small mode
+- **Hydra Event Mode Support** (NEW):
+  - Real-time donation updates (every 2 seconds)
+  - Hydra Gateway integration
+  - Lower fees indicator
+  - Near-instant confirmation messages
+  - Live stats display
+- Donation form (adapts to campaign mode)
 - Progress tracking
 - Recent donations list
 - Owner actions (edit, withdraw)
+- Admin management section (for creator)
+- Social sharing buttons
+- Public donation link
+
+### AdminInviteContent.tsx
+**Purpose**: Accept admin invitation
+
+**Features**:
+- Display campaign information
+- Show invitation details
+- Accept invitation button
+- Login prompt if not authenticated
+- Success confirmation
+- Auto-redirect to campaign page
+
+### DonateContent.tsx
+**Purpose**: Public donation page (accessible via shared link)
+
+**Features**:
+- Full campaign information
+- **Campaign Mode Detection**: Automatically detects and handles Hydra Event Mode
+- **Hydra Support**: Processes donations through Hydra Gateway when in Event Mode
+- Progress tracking
+- Donation form (adapts to campaign mode)
+- Wallet connection (if not connected)
+- Quick amount buttons (10, 50, 100, 500 ₳)
+- No login required
+- Success confirmation (different messages for Hydra vs Normal)
 
 ### Governance Content.tsx
 **Purpose**: View and vote on proposals
@@ -395,6 +518,231 @@ export default function ClientProviders({ children }) {
 - `SimpleAreaChart` - For time series data
 - `SimplePieChart` - For category distribution
 - `SimpleBarChart` - For comparisons
+
+### Chatbot.tsx
+**Purpose**: Production-ready AI chatbot with knowledge base, user data collection, and Telegram agent handoff
+
+**Features**:
+- 20+ Q&A knowledge base with step-by-step guidance
+- Smart keyword matching for instant answers
+- User data collection form (email/username) for non-logged-in users
+- Persistent chat history (localStorage)
+- Telegram agent connection when bot can't help
+- Message history with timestamps
+- Typing indicators
+- Quick action buttons (Connect Wallet, Donate, Create Campaign, etc.)
+- Clear chat history option
+- Responsive chat interface
+
+**Props**:
+```typescript
+interface ChatbotProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+```
+
+**Knowledge Base Topics**:
+- Wallet connection (step-by-step)
+- How to donate (step-by-step)
+- Campaign creation (step-by-step)
+- Identity verification (step-by-step)
+- 2FA setup (step-by-step)
+- Password reset (step-by-step)
+- Admin management (step-by-step)
+- Email verification
+- Governance & voting
+- QR codes
+- Hydra mode
+- Security features
+- Fees and costs
+- General platform info
+
+### ChatbotButton.tsx
+**Purpose**: Floating chat button (bottom-right corner)
+
+**Features**:
+- Always visible on all pages
+- Opens/closes chatbot
+- Positioned with fixed positioning
+- Smooth animations
+
+**Usage**: Automatically included in root layout
+
+### Captcha.tsx
+**Purpose**: Custom captcha component for signup protection
+
+**Features**:
+- Canvas-based visual captcha
+- Random text generation (5 characters)
+- Visual noise and rotation
+- Refresh button
+- Real-time validation
+- Case-insensitive matching
+
+**Props**:
+```typescript
+interface CaptchaProps {
+  onVerify: (isValid: boolean) => void;
+  resetKey?: number;  // Triggers reset when changed
+}
+```
+
+### WalletInfoModal.tsx
+**Purpose**: Modal for wallet users to add email/password
+
+**Features**:
+- First name, last name fields
+- Email field
+- Password field
+- Form validation
+- Optional (can be skipped)
+- Updates user profile
+- Saves password hash to localStorage
+
+**Props**:
+```typescript
+interface WalletInfoModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  walletAddress: string;
+  onComplete: () => void;
+}
+```
+
+### AdminManagement.tsx
+**Purpose**: Campaign admin management component
+
+**Features**:
+- Username search and validation
+- Add admin by username (max 7 admins)
+- Remove admin (except creator)
+- Admin invite link generation and copying
+- Public donation link generation and copying
+- Social media sharing buttons (Twitter, Facebook, LinkedIn, WhatsApp)
+- Admin list display with details
+- Only visible to campaign creator
+
+**Props**:
+```typescript
+interface AdminManagementProps {
+  campaignId: string;
+}
+```
+
+**Usage**:
+```typescript
+<AdminManagement campaignId={campaignId} />
+```
+
+### QRCodeGenerator.tsx
+**Purpose**: Generate and download QR codes for campaigns
+
+**Features**:
+- QR code generation using qrcode.react
+- Download QR as PNG image (using html2canvas)
+- Copy link to clipboard
+- Customizable size and title
+- Campaign title display
+
+**Props**:
+```typescript
+interface QRCodeGeneratorProps {
+  value: string;        // URL to encode in QR
+  title?: string;       // Title above QR
+  size?: number;        // QR size (default: 180)
+  campaignTitle?: string; // Campaign name for file download
+}
+```
+
+### ImageUpload.tsx
+**Purpose**: Image upload component with compression
+
+**Features**:
+- Drag and drop support
+- File type validation
+- Image compression/resize (max 800px dimension)
+- Base64 encoding for storage
+- Preview display
+- Remove image button
+- Customizable max size
+
+**Props**:
+```typescript
+interface ImageUploadProps {
+  onImageChange: (base64: string | null) => void;
+  currentImage?: string | null;
+  maxSizeKB?: number;   // Default: 500
+  label?: string;
+  placeholder?: string;
+}
+```
+
+### TwoFactorSetup.tsx
+**Purpose**: Setup two-factor authentication with Google Authenticator
+
+**Features**:
+- QR code for authenticator app scanning
+- Manual secret key entry option
+- 6-digit code verification
+- Backup codes generation (8 codes)
+- Enable/disable 2FA
+- Backup codes copy functionality
+
+**Props**:
+```typescript
+interface TwoFactorSetupProps {
+  email: string;
+  onComplete?: () => void;
+}
+```
+
+### TwoFactorVerify.tsx
+**Purpose**: Modal for 2FA verification during login
+
+**Features**:
+- 6-digit TOTP code input
+- Backup code support (8 characters)
+- Error handling
+- Loading state
+- Cancel option
+
+**Props**:
+```typescript
+interface TwoFactorVerifyProps {
+  email: string;
+  onSuccess: () => void;
+  onCancel?: () => void;
+}
+```
+
+### DocumentVerification.tsx
+**Purpose**: AI-powered identity verification for campaign creators
+
+**Features**:
+- Passport/License upload
+- Mock ML verification (70% success rate)
+- 3 attempts before utility bill fallback
+- Utility bill manual review (3-hour simulated)
+- Status tracking (none, pending, verified, failed, under_review)
+- File preview
+- Progress indicators
+
+**Props**:
+```typescript
+interface DocumentVerificationProps {
+  userId: string;
+  onVerified: () => void;
+  onClose?: () => void;
+}
+```
+
+**Verification Flow**:
+1. User uploads passport or driving license
+2. Mock ML model analyzes (2-3 second delay)
+3. 70% chance of success
+4. If failed 3 times, offer utility bill option
+5. Utility bill review takes 3 hours (simulated)
 
 ### PageWrapper.tsx
 **Purpose**: Generic client-side wrapper
@@ -515,7 +863,26 @@ interface UserState {
     };
     
     // Actions
+    // Wallet Authentication
     login: (address: string) => Promise<void>;
+    
+    // Email Authentication
+    loginWithEmail: (credentials: {
+        email: string;
+        password: string;
+        firstName?: string;  // Required for signup
+        lastName?: string;   // Required for signup
+        username?: string;   // Required for signup
+    }) => Promise<void>;
+    
+    // Email Verification
+    sendVerificationEmail: () => Promise<void>;
+    verifyEmail: (token: string) => Promise<boolean>;
+    
+    // Account Linking
+    linkWallet: (walletAddress: string) => Promise<void>;
+    
+    // Profile Management
     logout: () => void;
     updateProfile: (updates) => void;
     addTransaction: (tx) => void;
@@ -523,23 +890,70 @@ interface UserState {
     addSupportedCampaign: (campaign) => void;
     addDonationRecord: (record) => void;
     refreshStats: () => void;
+    
+    // Hydration
+    setHasHydrated: (state: boolean) => void;
+    _hasHydrated: boolean;
+    
+    // Username Management
+    checkUsernameAvailability: (username: string) => boolean;
+    findUserByUsername: (username: string) => { 
+        email?: string; 
+        walletAddress?: string; 
+        displayName: string;
+    } | null;
 }
 ```
+
+**Username Uniqueness:**
+- Usernames are checked across all users in localStorage
+- Case-insensitive matching
+- Minimum 3 characters
+- Only letters, numbers, and underscores allowed
+- Validated during signup
 
 ### campaignStore.ts (Zustand)
 **Purpose**: Global campaign state
 
 ```typescript
 interface CampaignState {
-    campaigns: Campaign[];
+    campaigns: CampaignFull[];
     
     // Actions
-    addCampaign: (campaign) => void;
+    addCampaign: (campaign) => string; // Returns campaign ID
     updateCampaign: (id, updates) => void;
-    removeCampaign: (id) => void;
-    getCampaign: (id) => Campaign | undefined;
+    deleteCampaign: (id) => void;
+    getCampaign: (id) => CampaignFull | undefined;
     addDonation: (campaignId, donation) => void;
+    
+    // Admin Management
+    addAdmin: (campaignId, username, addedBy) => Promise<boolean>;
+    removeAdmin: (campaignId, username) => void;
+    generateAdminInviteLink: (campaignId) => string;
+    generatePublicDonationLink: (campaignId) => string;
+    isAdmin: (campaignId, username) => boolean;
+    canManageAdmins: (campaignId, username) => boolean;
+    
+    // Utilities
     initializeWithMockData: () => void;
+}
+
+interface CampaignFull {
+    // ... campaign fields
+    creatorUsername?: string;
+    campaignMode?: 'normal' | 'hydra-event' | 'long-campaign' | 'small-campaign';
+    hydraHeadId?: string;
+    hydraSettled?: boolean;
+    hydraSettlementTxHash?: string;
+    admins: Array<{
+        username: string;
+        walletAddress?: string;
+        email?: string;
+        addedAt: string;
+        addedBy: string;
+    }>;
+    adminInviteLink?: string;
+    publicDonationLink?: string;
 }
 ```
 
@@ -556,6 +970,243 @@ interface SyncState {
     setLastSync: (date: Date) => void;
 }
 ```
+
+---
+
+## API Routes
+
+### Telegram API Routes
+
+#### `/api/telegram/connect` (POST)
+**Purpose**: Connect user to Telegram agent
+
+**Request Body**:
+```typescript
+{
+  userMessage: string;
+  userInfo: {
+    timestamp: string;
+  };
+}
+```
+
+**Response**:
+```typescript
+{
+  success: boolean;
+  message: string;
+  chatId?: string;
+  error?: string;
+}
+```
+
+#### `/api/telegram/get-chat-id` (GET)
+**Purpose**: Get all Telegram chat IDs
+
+**Response**:
+```typescript
+{
+  success: boolean;
+  chats: Array<{
+    chatId: number;
+    chatType: string;
+    username?: string;
+    firstName?: string;
+    lastName?: string;
+    lastMessage?: string;
+    lastMessageDate: string;
+  }>;
+  instructions: string[];
+}
+```
+
+#### `/api/telegram/webhook` (POST)
+**Purpose**: Receive messages from Telegram
+
+**Request Body**: Telegram webhook payload
+
+**Response**:
+```typescript
+{
+  ok: boolean;
+  error?: string;
+}
+```
+
+**GET Method**: Set webhook URL
+```
+GET /api/telegram/webhook?action=set-webhook&url=https://yourdomain.com/api/telegram/webhook
+```
+
+---
+
+## Utility Libraries
+
+### password.ts
+**Purpose**: Password hashing utilities
+
+**Functions**:
+- `hashPassword(password: string): Promise<string>` - Hash password with SHA-256
+- `verifyPassword(password: string, hash: string): Promise<boolean>` - Verify password against hash
+
+**Usage**:
+```typescript
+import { hashPassword, verifyPassword } from '@/lib/utils/password';
+
+const hash = await hashPassword('myPassword123');
+const isValid = await verifyPassword('myPassword123', hash);
+```
+
+### telegram.ts
+**Purpose**: Telegram Bot API utilities
+
+**Functions**:
+- `sendTelegramMessage(message: TelegramMessage): Promise<boolean>` - Send message to Telegram
+- `getTelegramUpdates(offset?: number)` - Get bot updates
+- `setTelegramWebhook(webhookUrl: string): Promise<boolean>` - Set webhook URL
+
+### otp.ts
+**Purpose**: OTP generation and verification for password reset and email verification
+
+**Functions**:
+- `generateOTP(): string` - Generate 6-digit OTP
+- `storeOTP(email, type): OTPData` - Store OTP for verification
+- `verifyOTP(email, otp, type): boolean` - Verify OTP
+- `isOTPVerified(email, type): boolean` - Check if OTP was verified
+- `clearOTP(email, type): void` - Clear OTP after use
+- `sendOTP(email, type): OTPData` - Generate and "send" OTP (simulated)
+
+**OTP Types**: `'email_verification' | 'password_reset'`
+
+**Usage**:
+```typescript
+import { sendOTP, verifyOTP, clearOTP } from '@/lib/utils/otp';
+
+// Send OTP for password reset (simulated - shows in alert)
+const otpData = sendOTP(email, 'password_reset');
+
+// Verify OTP (expires in 10 minutes)
+const isValid = verifyOTP(email, '123456', 'password_reset');
+
+// Clear after use
+if (isValid) clearOTP(email, 'password_reset');
+```
+
+### totp.ts
+**Purpose**: TOTP (Time-based One-Time Password) for Two-Factor Authentication
+
+**Functions**:
+- `generateTOTPSecret(): string` - Generate new TOTP secret
+- `generateTOTPUri(secret, email): string` - Generate URI for QR code
+- `verifyTOTP(token, secret): boolean` - Verify TOTP token
+- `generateBackupCodes(count?): string[]` - Generate backup codes (default 8)
+- `get2FAData(email): TwoFactorData | null` - Get 2FA data
+- `save2FAData(email, data): void` - Save 2FA data
+- `is2FAEnabled(email): boolean` - Check if 2FA is enabled
+- `setup2FA(email): SetupData` - Initialize 2FA setup
+- `enable2FA(email, token): boolean` - Enable after verification
+- `disable2FA(email, token): boolean` - Disable 2FA
+- `verify2FAToken(email, token): boolean` - Verify on login
+
+**Usage**:
+```typescript
+import { setup2FA, enable2FA, verify2FAToken, is2FAEnabled } from '@/lib/utils/totp';
+
+// Setup 2FA (returns secret, URI for QR, backup codes)
+const { secret, uri, backupCodes } = setup2FA(email);
+
+// User scans QR and enters code to enable
+const enabled = enable2FA(email, '123456');
+
+// On login, check if 2FA required
+if (is2FAEnabled(email)) {
+  const valid = verify2FAToken(email, userCode);
+}
+```
+
+### documentVerifier.ts
+**Purpose**: Mock AI document verification for identity verification
+
+**Location**: `lib/verification/documentVerifier.ts`
+
+**Key Features**:
+- Mock ML model with 70% success rate
+- Support for passport, license, and utility bill
+- 3 attempts before utility bill fallback
+- 3-hour manual review simulation
+
+**Functions**:
+- `getVerificationData(userId): IdentityVerification | null`
+- `submitDocumentVerification(userId, type, image): Promise<VerificationResult>`
+- `checkUtilityBillReview(userId): VerificationResult`
+- `isUserVerified(userId): boolean`
+- `getRemainingAttempts(userId): number`
+
+**Verification Flow**:
+1. User uploads passport/license
+2. Mock ML analyzes (2-3 second delay)
+3. 70% success rate for demo
+4. After 3 failures, utility bill option
+5. Utility bill takes 3 hours (simulated)
+
+### hydraGateway.ts
+**Purpose**: Hydra Gateway Service for fast, low-fee donations during live events
+
+**Location**: `lib/hydra/hydraGateway.ts`
+
+**Key Features**:
+- Initialize Hydra Head for campaigns
+- Process donations through Hydra Head
+- Real-time donation statistics
+- Settle Hydra Head to L1 (aggregated transactions)
+
+**Main Functions**:
+```typescript
+// Initialize or get Hydra Head for a campaign
+hydraGateway.initializeHydraHead(campaignId: string): Promise<HydraHead>
+
+// Process a donation through Hydra Head
+hydraGateway.processDonation(
+    campaignId: string,
+    donorAddress: string,
+    amount: number
+): Promise<HydraDonation>
+
+// Get real-time stats (for live updates)
+hydraGateway.getRealTimeStats(campaignId: string): Promise<{
+    totalAmount: number;
+    donationCount: number;
+    lastDonationAt?: string;
+}>
+
+// Settle Hydra Head to L1 (after event)
+hydraGateway.settleHydraHead(campaignId: string): Promise<string>
+```
+
+**Usage**:
+```typescript
+import { hydraGateway } from '@/lib/hydra/hydraGateway';
+
+// Initialize Hydra Head
+const head = await hydraGateway.initializeHydraHead(campaignId);
+
+// Process donation
+const donation = await hydraGateway.processDonation(
+    campaignId,
+    walletAddress,
+    amountInLovelace
+);
+
+// Get real-time stats
+const stats = await hydraGateway.getRealTimeStats(campaignId);
+```
+
+**Hydra Event Mode Benefits**:
+- ⚡ Near-instant confirmations (vs ~20 seconds for L1)
+- 💰 Lower fees (aggregated transactions)
+- 📊 Real-time updates (every 2 seconds)
+- 🔄 Automatic L1 settlement after event
+- `getBotInfo()` - Get bot information
 
 ---
 

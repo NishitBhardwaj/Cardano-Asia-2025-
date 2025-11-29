@@ -7,23 +7,42 @@ import { MeshProvider } from '@meshsdk/react';
 import useAuth from '@/lib/hooks/useAuth';
 import { useUserStore } from '@/lib/store/userStore';
 import Header from '@/components/Header';
+import { BrowserWallet } from '@meshsdk/core';
+import TwoFactorSetup from '@/components/TwoFactorSetup';
 
 function ProfilePageInner() {
     const router = useRouter();
-    const { isAuthenticated, profile, walletAddress, balance, disconnectWallet } = useAuth();
-    const { stats, transactions, campaigns, supportedCampaigns, _hasHydrated } = useUserStore();
+    const { isAuthenticated, profile, walletAddress, balance, disconnectWallet, availableWallets, connectWallet } = useAuth();
+    const { stats, transactions, campaigns, supportedCampaigns, _hasHydrated, sendVerificationEmail, linkWallet } = useUserStore();
     const [activeTab, setActiveTab] = useState<'overview' | 'transactions' | 'campaigns' | 'settings'>('overview');
+    const [isSendingVerification, setIsSendingVerification] = useState(false);
+    const [isLinkingWallet, setIsLinkingWallet] = useState(false);
+    const [verificationMessage, setVerificationMessage] = useState<string | null>(null);
+    const [mounted, setMounted] = useState(false);
+    const [loadingTimeout, setLoadingTimeout] = useState(false);
+
+    // Mark as mounted on client
+    useEffect(() => {
+        setMounted(true);
+        
+        // Set a timeout to prevent infinite loading
+        const timer = setTimeout(() => {
+            setLoadingTimeout(true);
+        }, 3000); // 3 second max wait
+        
+        return () => clearTimeout(timer);
+    }, []);
 
     // Redirect if not authenticated (only after hydration completes)
     useEffect(() => {
         // Wait for store to hydrate before checking auth
-        if (_hasHydrated && !isAuthenticated) {
+        if (mounted && (_hasHydrated || loadingTimeout) && !isAuthenticated) {
             router.push('/auth');
         }
-    }, [isAuthenticated, _hasHydrated, router]);
+    }, [isAuthenticated, _hasHydrated, router, mounted, loadingTimeout]);
 
-    // Show loading while hydrating or authenticating
-    if (!_hasHydrated || (!isAuthenticated && !profile)) {
+    // Show loading while hydrating (with timeout protection)
+    if (!mounted || (!_hasHydrated && !loadingTimeout)) {
         return (
             <div className="min-h-screen bg-background flex items-center justify-center">
                 <div className="text-center space-y-4">
@@ -47,18 +66,32 @@ function ProfilePageInner() {
     }
 
     return (
-        <div className="min-h-screen bg-background">
+        <div className="min-h-screen bg-background bg-gradient-mesh">
             <Header />
 
             <div className="container mx-auto px-6 py-12">
                 {/* Profile Header */}
-                <div className="flex flex-col md:flex-row gap-8 items-start mb-12">
-                    <div className="text-8xl">{profile.avatar}</div>
+                <div className="flex flex-col md:flex-row gap-8 items-start mb-12 bg-gradient-radial rounded-2xl p-8">
+                    <div className="text-8xl animate-float-slow">{profile.avatar}</div>
                     <div className="flex-1">
                         <h1 className="text-5xl font-bold mb-2">{profile.displayName}</h1>
-                        <p className="text-foreground/60 font-mono text-sm mb-4">
-                            {walletAddress?.slice(0, 20)}...{walletAddress?.slice(-10)}
-                        </p>
+                        <div className="space-y-2 mb-4">
+                            {profile.email && (
+                                <div className="flex items-center gap-2">
+                                    <p className="text-foreground/60">{profile.email}</p>
+                                    {profile.emailVerified ? (
+                                        <span className="text-green-500" title="Email verified">✓</span>
+                                    ) : (
+                                        <span className="text-yellow-500" title="Email not verified">⚠</span>
+                                    )}
+                                </div>
+                            )}
+                            {walletAddress && (
+                                <p className="text-foreground/60 font-mono text-sm">
+                                    {walletAddress.slice(0, 20)}...{walletAddress.slice(-10)}
+                                </p>
+                            )}
+                        </div>
                         <div className="flex gap-4">
                             <div className="glass px-4 py-2 rounded-lg">
                                 <span className="text-foreground/60 text-sm">Balance</span>
@@ -177,24 +210,113 @@ function ProfilePageInner() {
 
                 {/* Settings Tab */}
                 {activeTab === 'settings' && (
-                    <div className="glass p-6 rounded-xl max-w-xl">
+                    <div className="glass p-6 rounded-xl max-w-xl space-y-6">
                         <h3 className="text-xl font-bold mb-6">Settings</h3>
-                        <div className="space-y-6">
-                            <div>
-                                <label className="block text-sm text-foreground/60 mb-2">Display Name</label>
-                                <p className="glass px-4 py-3 rounded-lg">{profile.displayName}</p>
-                            </div>
-                            <div>
-                                <label className="block text-sm text-foreground/60 mb-2">Wallet Address</label>
-                                <p className="glass px-4 py-3 rounded-lg font-mono text-sm break-all">{walletAddress}</p>
-                            </div>
-                            <button
-                                onClick={disconnectWallet}
-                                className="w-full bg-red-500/20 border border-red-500/50 text-red-500 px-6 py-3 rounded-lg font-medium hover:bg-red-500/30 transition-colors"
-                            >
-                                Disconnect Wallet
-                            </button>
+                        
+                        {/* Display Name */}
+                        <div>
+                            <label className="block text-sm text-foreground/60 mb-2">Display Name</label>
+                            <p className="glass px-4 py-3 rounded-lg">{profile.displayName}</p>
                         </div>
+
+                        {/* Email Section */}
+                        {profile.email && (
+                            <div>
+                                <label className="block text-sm text-foreground/60 mb-2">Email Address</label>
+                                <div className="space-y-2">
+                                    <div className="flex items-center gap-2 glass px-4 py-3 rounded-lg">
+                                        <span>{profile.email}</span>
+                                        {profile.emailVerified ? (
+                                            <span className="text-green-500" title="Verified">✓ Verified</span>
+                                        ) : (
+                                            <span className="text-yellow-500" title="Not verified">⚠ Not Verified</span>
+                                        )}
+                                    </div>
+                                    {!profile.emailVerified && (
+                                        <div className="space-y-2">
+                                            <button
+                                                onClick={async () => {
+                                                    setIsSendingVerification(true);
+                                                    setVerificationMessage(null);
+                                                    try {
+                                                        await sendVerificationEmail();
+                                                        setVerificationMessage('Verification email sent! Check your inbox.');
+                                                    } catch (error: any) {
+                                                        setVerificationMessage(error.message || 'Failed to send verification email');
+                                                    } finally {
+                                                        setIsSendingVerification(false);
+                                                    }
+                                                }}
+                                                disabled={isSendingVerification}
+                                                className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
+                                            >
+                                                {isSendingVerification ? 'Sending...' : 'Send Verification Email'}
+                                            </button>
+                                            {verificationMessage && (
+                                                <p className={`text-sm ${verificationMessage.includes('sent') ? 'text-green-500' : 'text-red-500'}`}>
+                                                    {verificationMessage}
+                                                </p>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Wallet Section */}
+                        <div>
+                            <label className="block text-sm text-foreground/60 mb-2">Wallet</label>
+                            {walletAddress ? (
+                                <div className="space-y-2">
+                                    <p className="glass px-4 py-3 rounded-lg font-mono text-sm break-all">{walletAddress}</p>
+                                    <button
+                                        onClick={disconnectWallet}
+                                        className="w-full bg-red-500/20 border border-red-500/50 text-red-500 px-6 py-3 rounded-lg font-medium hover:bg-red-500/30 transition-colors"
+                                    >
+                                        Disconnect Wallet
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="space-y-2">
+                                    <p className="text-foreground/60 text-sm mb-2">No wallet connected</p>
+                                    {availableWallets.length > 0 ? (
+                                        <div className="space-y-2">
+                                            {availableWallets.map((wallet) => (
+                                                <button
+                                                    key={wallet.name}
+                                                    onClick={async () => {
+                                                        setIsLinkingWallet(true);
+                                                        try {
+                                                            const walletInstance = await BrowserWallet.enable(wallet.name);
+                                                            const address = await walletInstance.getChangeAddress();
+                                                            await linkWallet(address);
+                                                            // Also connect via useAuth to get balance
+                                                            await connectWallet(wallet.name);
+                                                        } catch (error: any) {
+                                                            alert(error.message || 'Failed to connect wallet');
+                                                        } finally {
+                                                            setIsLinkingWallet(false);
+                                                        }
+                                                    }}
+                                                    disabled={isLinkingWallet}
+                                                    className="w-full flex items-center gap-3 px-4 py-3 glass rounded-lg hover:bg-primary/20 transition-colors disabled:opacity-50"
+                                                >
+                                                    <img src={wallet.icon} alt={wallet.name} className="w-8 h-8 rounded-lg" />
+                                                    <span className="font-medium capitalize">{wallet.name}</span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p className="text-foreground/60 text-sm">No wallet extension found. Install a Cardano wallet to connect.</p>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Two-Factor Authentication */}
+                        {profile.email && (
+                            <TwoFactorSetup email={profile.email} />
+                        )}
                     </div>
                 )}
             </div>

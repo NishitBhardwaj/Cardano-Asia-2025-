@@ -1,28 +1,38 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { MeshProvider } from '@meshsdk/react';
 import useAuth from '@/lib/hooks/useAuth';
 import { useUserStore } from '@/lib/store/userStore';
 import Header from '@/components/Header';
 import Link from 'next/link';
+import QRModal from '@/components/QRModal';
 
 function DashboardPageInner() {
     const router = useRouter();
     const { isAuthenticated, profile, walletAddress, balance } = useAuth();
-    const { stats, transactions, campaigns, supportedCampaigns } = useUserStore();
+    const { stats, transactions, campaigns, supportedCampaigns, _hasHydrated } = useUserStore();
+    const [mounted, setMounted] = useState(false);
+    const [qrModal, setQrModal] = useState<{ campaignId: string; title: string } | null>(null);
 
     useEffect(() => {
-        if (!isAuthenticated) {
+        setMounted(true);
+    }, []);
+
+    useEffect(() => {
+        if (mounted && _hasHydrated && !isAuthenticated) {
             router.push('/auth');
         }
-    }, [isAuthenticated, router]);
+    }, [isAuthenticated, router, mounted, _hasHydrated]);
 
-    if (!isAuthenticated || !profile) {
+    if (!mounted || !_hasHydrated || !isAuthenticated || !profile) {
         return (
             <div className="min-h-screen bg-background flex items-center justify-center">
-                <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                <div className="text-center space-y-4">
+                    <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+                    <p className="text-foreground/60">Loading dashboard...</p>
+                </div>
             </div>
         );
     }
@@ -89,13 +99,27 @@ function DashboardPageInner() {
                     {campaigns.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {campaigns.slice(0, 3).map((c) => (
-                                <Link key={c.id} href={`/campaigns/${c.id}`} className="p-4 bg-white/5 rounded-lg hover:bg-white/10">
+                                <div key={c.id} className="p-4 bg-white/5 rounded-lg hover:bg-white/10">
                                     <h4 className="font-bold mb-1">{c.title}</h4>
                                     <p className="text-sm text-foreground/60">{(c.raised / 1_000_000).toFixed(0)} / {(c.goal / 1_000_000).toFixed(0)} ₳</p>
                                     <div className="h-1 bg-white/10 rounded-full mt-2 overflow-hidden">
                                         <div className="h-full gradient-primary" style={{ width: `${Math.min((c.raised / c.goal) * 100, 100)}%` }} />
                                     </div>
-                                </Link>
+                                    <div className="flex gap-2 mt-3">
+                                        <Link 
+                                            href={`/campaigns/${c.id}`}
+                                            className="flex-1 text-center glass py-2 rounded-lg text-sm font-medium hover:bg-white/10"
+                                        >
+                                            View
+                                        </Link>
+                                        <button
+                                            onClick={() => setQrModal({ campaignId: c.id, title: c.title })}
+                                            className="flex-1 glass py-2 rounded-lg text-sm font-medium hover:bg-white/10"
+                                        >
+                                            Show QR
+                                        </button>
+                                    </div>
+                                </div>
                             ))}
                         </div>
                     ) : (
@@ -133,6 +157,16 @@ function DashboardPageInner() {
                     )}
                 </div>
             </div>
+
+            {/* QR Modal */}
+            {qrModal && (
+                <QRModal
+                    campaignId={qrModal.campaignId}
+                    campaignTitle={qrModal.title}
+                    isOpen={!!qrModal}
+                    onClose={() => setQrModal(null)}
+                />
+            )}
         </div>
     );
 }

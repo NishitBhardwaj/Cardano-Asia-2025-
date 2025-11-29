@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { MeshProvider } from '@meshsdk/react';
 import useAuth from '@/lib/hooks/useAuth';
 import { useUserStore } from '@/lib/store/userStore';
+import WalletInfoModal from '@/components/WalletInfoModal';
 
 function AuthPageInner() {
     const router = useRouter();
@@ -27,9 +28,20 @@ function AuthPageInner() {
     const [showWelcome, setShowWelcome] = useState(false);
     const [redirectCountdown, setRedirectCountdown] = useState(3);
     const [justConnected, setJustConnected] = useState(false);
+    const [authMode, setAuthMode] = useState<'wallet' | 'email'>('wallet');
+    const [showWalletInfoModal, setShowWalletInfoModal] = useState(false);
+    const [mounted, setMounted] = useState(false);
+
+    // Mark as mounted on client
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     // Redirect to profile if already authenticated (only after just connecting or hydration)
     useEffect(() => {
+        // Wait for mount
+        if (!mounted) return;
+        
         // Only redirect if:
         // 1. User just connected their wallet, OR
         // 2. Store has hydrated and user is already authenticated
@@ -51,7 +63,7 @@ function AuthPageInner() {
 
             // Redirect after countdown
             const redirectTimer = setTimeout(() => {
-                window.location.href = '/profile';
+                router.push('/profile');
             }, 2500);
 
             return () => {
@@ -59,7 +71,7 @@ function AuthPageInner() {
                 clearTimeout(redirectTimer);
             };
         }
-    }, [isAuthenticated, profile, justConnected, _hasHydrated]);
+    }, [isAuthenticated, profile, justConnected, _hasHydrated, mounted, router]);
 
     const handleConnect = async (walletName: string) => {
         setSelectedWallet(walletName);
@@ -68,6 +80,11 @@ function AuthPageInner() {
         try {
             await connectWallet(walletName);
             setJustConnected(true); // Mark that we just connected
+            
+            // Check if user has email - if not, show modal
+            if (profile && !profile.email) {
+                setShowWalletInfoModal(true);
+            }
         } catch (err: any) {
             setError(err.message || 'Failed to connect wallet');
             setSelectedWallet(null);
@@ -107,11 +124,12 @@ function AuthPageInner() {
     }
 
     return (
-        <div className="min-h-screen bg-background">
+        <div className="min-h-screen bg-background bg-gradient-mesh relative overflow-hidden">
             {/* Background decoration */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/20 rounded-full blur-3xl" />
-                <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-secondary/20 rounded-full blur-3xl" />
+                <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/20 rounded-full blur-3xl animate-float-slow" />
+                <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-secondary/20 rounded-full blur-3xl animate-float" />
+                <div className="absolute top-1/4 left-1/4 w-40 h-40 bg-accent/10 rounded-full blur-2xl animate-pulse-slow" />
             </div>
 
             {/* Header */}
@@ -132,30 +150,82 @@ function AuthPageInner() {
                     <div className="glass p-8 rounded-2xl space-y-8">
                         {/* Title */}
                         <div className="text-center">
-                            <h2 className="text-3xl font-bold mb-2">Connect Your Wallet</h2>
+                            <h2 className="text-3xl font-bold mb-2">Welcome to DonateDAO</h2>
                             <p className="text-foreground/70">
-                                Sign in securely using your Cardano wallet
+                                Choose your preferred sign-in method
                             </p>
                         </div>
 
-                        {/* Features */}
-                        <div className="grid grid-cols-3 gap-4 py-4 border-y border-border">
-                            <div className="text-center">
-                                <div className="text-2xl mb-1">🔐</div>
-                                <p className="text-xs text-foreground/60">Secure</p>
-                            </div>
-                            <div className="text-center">
-                                <div className="text-2xl mb-1">⚡</div>
-                                <p className="text-xs text-foreground/60">Instant</p>
-                            </div>
-                            <div className="text-center">
-                                <div className="text-2xl mb-1">🌐</div>
-                                <p className="text-xs text-foreground/60">Decentralized</p>
-                            </div>
+                        {/* Auth Mode Tabs */}
+                        <div className="flex gap-2 p-1 glass rounded-lg">
+                            <button
+                                onClick={() => setAuthMode('wallet')}
+                                className={`flex-1 px-4 py-2 rounded-md transition-colors ${
+                                    authMode === 'wallet'
+                                        ? 'bg-primary text-primary-foreground'
+                                        : 'text-foreground/60 hover:text-foreground'
+                                }`}
+                            >
+                                Wallet
+                            </button>
+                            <button
+                                onClick={() => setAuthMode('email')}
+                                className={`flex-1 px-4 py-2 rounded-md transition-colors ${
+                                    authMode === 'email'
+                                        ? 'bg-primary text-primary-foreground'
+                                        : 'text-foreground/60 hover:text-foreground'
+                                }`}
+                            >
+                                Email
+                            </button>
                         </div>
 
-                        {/* Wallet Options */}
-                        <div className="space-y-3">
+                        {/* Email Auth Section */}
+                        {authMode === 'email' && (
+                            <div className="space-y-4">
+                                <div className="text-center space-y-4">
+                                    <p className="text-foreground/70">
+                                        Sign in with your email address
+                                    </p>
+                                    <div className="flex gap-3">
+                                        <Link
+                                            href="/auth/login"
+                                            className="flex-1 px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors text-center"
+                                        >
+                                            Sign In
+                                        </Link>
+                                        <Link
+                                            href="/auth/signup"
+                                            className="flex-1 px-6 py-3 glass rounded-lg font-medium hover:bg-primary/20 transition-colors text-center"
+                                        >
+                                            Sign Up
+                                        </Link>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Wallet Auth Section */}
+                        {authMode === 'wallet' && (
+                            <>
+                                {/* Features */}
+                                <div className="grid grid-cols-3 gap-4 py-4 border-y border-border">
+                                    <div className="text-center">
+                                        <div className="text-2xl mb-1">🔐</div>
+                                        <p className="text-xs text-foreground/60">Secure</p>
+                                    </div>
+                                    <div className="text-center">
+                                        <div className="text-2xl mb-1">⚡</div>
+                                        <p className="text-xs text-foreground/60">Instant</p>
+                                    </div>
+                                    <div className="text-center">
+                                        <div className="text-2xl mb-1">🌐</div>
+                                        <p className="text-xs text-foreground/60">Decentralized</p>
+                                    </div>
+                                </div>
+
+                                {/* Wallet Options */}
+                                <div className="space-y-3">
                             {availableWallets.length > 0 ? (
                                 availableWallets.map((wallet) => (
                                     <button
@@ -213,7 +283,9 @@ function AuthPageInner() {
                                     </div>
                                 </div>
                             )}
-                        </div>
+                                </div>
+                            </>
+                        )}
 
                         {/* Error Message */}
                         {error && (
@@ -261,6 +333,19 @@ function AuthPageInner() {
                     </div>
                 </div>
             </div>
+
+            {/* Wallet Info Modal */}
+            {walletAddress && (
+                <WalletInfoModal
+                    isOpen={showWalletInfoModal}
+                    onClose={() => setShowWalletInfoModal(false)}
+                    walletAddress={walletAddress}
+                    onComplete={() => {
+                        setShowWalletInfoModal(false);
+                        // Profile will be updated, redirect will happen automatically
+                    }}
+                />
+            )}
         </div>
     );
 }

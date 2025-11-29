@@ -57,9 +57,31 @@ export interface CampaignFull {
     // Creator
     creatorAddress: string;
     creatorName?: string;
+    creatorUsername?: string;
+    
+    // Admins (max 7 including creator)
+    admins: Array<{
+        username: string;
+        walletAddress?: string;
+        email?: string;
+        addedAt: string;
+        addedBy: string; // username of who added them
+    }>;
+    adminInviteLink?: string; // Shareable link to add admins
+    
+    // Public Sharing
+    publicDonationLink?: string; // Shareable link for public donations
     
     // Status
     status: 'draft' | 'active' | 'paused' | 'completed' | 'cancelled' | 'expired';
+    
+    // Campaign Mode
+    campaignMode?: 'normal' | 'hydra-event' | 'long-campaign' | 'small-campaign'; // Default: 'normal'
+    
+    // Hydra-specific fields (only for hydra-event mode)
+    hydraHeadId?: string; // Hydra Head identifier
+    hydraSettled?: boolean; // Whether Hydra Head has been settled to L1
+    hydraSettlementTxHash?: string; // L1 transaction hash after settlement
     
     // Engagement
     donations: Donation[];
@@ -96,7 +118,7 @@ export interface CampaignState {
     error: string | null;
     
     // Actions
-    addCampaign: (campaign: Omit<CampaignFull, 'id' | 'raised' | 'donations' | 'donorCount' | 'viewCount' | 'updatedAt'>) => string;
+    addCampaign: (campaign: Omit<CampaignFull, 'id' | 'raised' | 'donations' | 'donorCount' | 'viewCount' | 'updatedAt' | 'admins' | 'adminInviteLink' | 'publicDonationLink'>) => string;
     updateCampaign: (id: string, updates: Partial<CampaignFull>) => void;
     deleteCampaign: (id: string) => void;
     
@@ -117,6 +139,14 @@ export interface CampaignState {
     getFilteredCampaigns: () => CampaignFull[];
     getCampaignStats: (id: string) => CampaignStats | undefined;
     getDonationsByDonor: (donorAddress: string) => { campaign: CampaignFull; donation: Donation }[];
+    
+    // Admin Management
+    addAdmin: (campaignId: string, username: string, addedBy: string) => Promise<boolean>;
+    removeAdmin: (campaignId: string, username: string) => void;
+    generateAdminInviteLink: (campaignId: string) => string;
+    generatePublicDonationLink: (campaignId: string) => string;
+    isAdmin: (campaignId: string, username: string) => boolean;
+    canManageAdmins: (campaignId: string, username: string) => boolean;
     
     // Utilities
     incrementViewCount: (id: string) => void;
@@ -178,6 +208,9 @@ const defaultFilters: CampaignFilters = {
 // MOCK DATA
 // ============================================================================
 
+// Test wallet address for all campaigns (preprod)
+const TEST_WALLET_ADDRESS = 'addr1q8gc0kzz496lhjavkyx4hydn9tpnd58a876d44uuwty59hymqzc3s3a2c3thyrle46n6ty5zmfsqc4jrhxhdtgmt8cgsushahj';
+
 const mockCampaigns: CampaignFull[] = [
     {
         id: 'mock_1',
@@ -191,13 +224,22 @@ const mockCampaigns: CampaignFull[] = [
         createdAt: '2025-10-01T00:00:00Z',
         deadline: '2025-12-15T23:59:59Z',
         updatedAt: '2025-11-29T10:00:00Z',
-        creatorAddress: 'addr1qy8ac...vw8k',
+        creatorAddress: TEST_WALLET_ADDRESS,
         creatorName: 'Education Foundation',
+        creatorUsername: 'education_foundation',
+        admins: [{
+            username: 'education_foundation',
+            walletAddress: TEST_WALLET_ADDRESS,
+            addedAt: '2025-10-01T00:00:00Z',
+            addedBy: 'education_foundation',
+        }],
+        adminInviteLink: '',
+        publicDonationLink: '',
         status: 'active',
         donations: [
-            { id: 'd1', donorAddress: 'addr1qx...p2n', donorName: 'Alice', amount: 1000_000_000, txHash: 'abc123...', timestamp: '2025-11-20T14:30:00Z', status: 'confirmed' },
-            { id: 'd2', donorAddress: 'addr1qz...km5r', donorName: 'Bob', amount: 250_000_000, txHash: 'def456...', timestamp: '2025-11-21T09:15:00Z', status: 'confirmed' },
-            { id: 'd3', donorAddress: 'addr1qw...7t8u', amount: 500_000_000, txHash: 'ghi789...', timestamp: '2025-11-22T16:45:00Z', status: 'confirmed' },
+            { id: 'd1', donorAddress: TEST_WALLET_ADDRESS, donorName: 'Alice', amount: 1000_000_000, txHash: 'abc123def456ghi789jkl012mno345pqr678stu901vwx234yz567', timestamp: '2025-11-20T14:30:00Z', status: 'confirmed' },
+            { id: 'd2', donorAddress: TEST_WALLET_ADDRESS, donorName: 'Bob', amount: 250_000_000, txHash: 'def456ghi789jkl012mno345pqr678stu901vwx234yz567abc123', timestamp: '2025-11-21T09:15:00Z', status: 'confirmed' },
+            { id: 'd3', donorAddress: TEST_WALLET_ADDRESS, amount: 500_000_000, txHash: 'ghi789jkl012mno345pqr678stu901vwx234yz567abc123def456', timestamp: '2025-11-22T16:45:00Z', status: 'confirmed' },
         ],
         milestones: [
             { id: 'm1', title: 'Classroom Renovation', description: 'Renovate 10 classrooms', amount: 20000_000_000, completed: true, completedAt: '2025-11-15T00:00:00Z' },
@@ -222,8 +264,18 @@ const mockCampaigns: CampaignFull[] = [
         createdAt: '2025-09-15T00:00:00Z',
         deadline: '2025-12-01T23:59:59Z',
         updatedAt: '2025-11-28T08:00:00Z',
-        creatorAddress: 'addr1qx...xp2n',
+        creatorAddress: TEST_WALLET_ADDRESS,
         creatorName: 'Health Alliance',
+        creatorUsername: 'health_alliance',
+        admins: [{
+            username: 'health_alliance',
+            walletAddress: TEST_WALLET_ADDRESS,
+            addedAt: '2025-09-15T00:00:00Z',
+            addedBy: 'health_alliance',
+        }],
+        adminInviteLink: '',
+        publicDonationLink: '',
+        campaignMode: 'normal',
         status: 'active',
         donations: [],
         milestones: [
@@ -247,7 +299,17 @@ const mockCampaigns: CampaignFull[] = [
         createdAt: '2025-11-01T00:00:00Z',
         deadline: '2026-01-30T23:59:59Z',
         updatedAt: '2025-11-27T14:00:00Z',
-        creatorAddress: 'addr1qz...km5r',
+        creatorAddress: TEST_WALLET_ADDRESS,
+        creatorUsername: 'community_gardener',
+        admins: [{
+            username: 'community_gardener',
+            walletAddress: TEST_WALLET_ADDRESS,
+            addedAt: '2025-11-01T00:00:00Z',
+            addedBy: 'community_gardener',
+        }],
+        adminInviteLink: '',
+        publicDonationLink: '',
+        campaignMode: 'normal',
         status: 'active',
         donations: [],
         milestones: [
@@ -270,8 +332,18 @@ const mockCampaigns: CampaignFull[] = [
         createdAt: '2025-10-20T00:00:00Z',
         deadline: '2026-02-15T23:59:59Z',
         updatedAt: '2025-11-26T11:00:00Z',
-        creatorAddress: 'addr1qw...ab2c',
+        creatorAddress: TEST_WALLET_ADDRESS,
         creatorName: 'Tech4All',
+        creatorUsername: 'tech4all',
+        admins: [{
+            username: 'tech4all',
+            walletAddress: TEST_WALLET_ADDRESS,
+            addedAt: '2025-10-20T00:00:00Z',
+            addedBy: 'tech4all',
+        }],
+        adminInviteLink: '',
+        publicDonationLink: '',
+        campaignMode: 'normal',
         status: 'active',
         donations: [],
         milestones: [
@@ -294,8 +366,17 @@ const mockCampaigns: CampaignFull[] = [
         createdAt: '2025-09-01T00:00:00Z',
         deadline: '2025-11-30T23:59:59Z',
         updatedAt: '2025-11-30T00:00:00Z',
-        creatorAddress: 'addr1qr...de3f',
+        creatorAddress: TEST_WALLET_ADDRESS,
         creatorName: 'Paw Sanctuary',
+        creatorUsername: 'paw_sanctuary',
+        admins: [{
+            username: 'paw_sanctuary',
+            walletAddress: TEST_WALLET_ADDRESS,
+            addedAt: '2025-09-01T00:00:00Z',
+            addedBy: 'paw_sanctuary',
+        }],
+        adminInviteLink: '',
+        publicDonationLink: '',
         status: 'completed',
         donations: [],
         milestones: [
@@ -319,8 +400,18 @@ const mockCampaigns: CampaignFull[] = [
         createdAt: '2025-10-15T00:00:00Z',
         deadline: '2026-03-01T23:59:59Z',
         updatedAt: '2025-11-25T09:00:00Z',
-        creatorAddress: 'addr1qs...gh4i',
+        creatorAddress: TEST_WALLET_ADDRESS,
         creatorName: 'Water for All',
+        creatorUsername: 'water_for_all',
+        admins: [{
+            username: 'water_for_all',
+            walletAddress: TEST_WALLET_ADDRESS,
+            addedAt: '2025-10-15T00:00:00Z',
+            addedBy: 'water_for_all',
+        }],
+        adminInviteLink: '',
+        publicDonationLink: '',
+        campaignMode: 'normal',
         status: 'active',
         donations: [],
         milestones: [
@@ -353,6 +444,19 @@ export const useCampaignStore = create<CampaignState>()(
                 const id = generateCampaignId();
                 const now = new Date().toISOString();
                 
+                // Initialize admins array with creator
+                const creatorUsername = campaignData.creatorUsername || '';
+                const admins = creatorUsername ? [{
+                    username: creatorUsername,
+                    walletAddress: campaignData.creatorAddress,
+                    addedAt: now,
+                    addedBy: creatorUsername,
+                }] : [];
+                
+                // Generate sharing links (will be set properly when accessed on client)
+                const adminInviteLink = '';
+                const publicDonationLink = '';
+                
                 const newCampaign: CampaignFull = {
                     ...campaignData,
                     id,
@@ -361,6 +465,11 @@ export const useCampaignStore = create<CampaignState>()(
                     donorCount: 0,
                     viewCount: 0,
                     updatedAt: now,
+                    admins,
+                    adminInviteLink,
+                    publicDonationLink,
+                    campaignMode: campaignData.campaignMode || 'normal', // Default to normal mode
+                    hydraSettled: false,
                 };
 
                 set((state) => ({
@@ -609,6 +718,95 @@ export const useCampaignStore = create<CampaignState>()(
                         campaigns: [...state.campaigns, ...newMockCampaigns],
                     };
                 });
+            },
+
+            // Admin Management
+            addAdmin: async (campaignId, username, addedBy) => {
+                const campaign = get().getCampaign(campaignId);
+                if (!campaign) return false;
+
+                // Check admin limit (max 7 including creator)
+                if (campaign.admins && campaign.admins.length >= 7) {
+                    throw new Error('Maximum 7 admins allowed per campaign');
+                }
+
+                // Check if username already exists as admin
+                if (campaign.admins?.some(a => a.username.toLowerCase() === username.toLowerCase())) {
+                    throw new Error('User is already an admin');
+                }
+
+                // Verify username exists in userStore (will be checked in UI)
+                const now = new Date().toISOString();
+                const newAdmin = {
+                    username,
+                    addedAt: now,
+                    addedBy,
+                };
+
+                set((state) => ({
+                    campaigns: state.campaigns.map((c) =>
+                        c.id === campaignId
+                            ? {
+                                ...c,
+                                admins: [...(c.admins || []), newAdmin],
+                                updatedAt: now,
+                            }
+                            : c
+                    ),
+                }));
+
+                return true;
+            },
+
+            removeAdmin: (campaignId, username) => {
+                const campaign = get().getCampaign(campaignId);
+                if (!campaign) return;
+
+                // Don't allow removing creator
+                if (campaign.creatorUsername === username) {
+                    throw new Error('Cannot remove campaign creator');
+                }
+
+                set((state) => ({
+                    campaigns: state.campaigns.map((c) =>
+                        c.id === campaignId
+                            ? {
+                                ...c,
+                                admins: (c.admins || []).filter(a => a.username !== username),
+                                updatedAt: new Date().toISOString(),
+                            }
+                            : c
+                    ),
+                }));
+            },
+
+            generateAdminInviteLink: (campaignId) => {
+                if (typeof window === 'undefined') {
+                    // Return placeholder - will be set on client
+                    return `/campaigns/${campaignId}/admin-invite`;
+                }
+                return `${window.location.origin}/campaigns/${campaignId}/admin-invite`;
+            },
+
+            generatePublicDonationLink: (campaignId) => {
+                if (typeof window === 'undefined') {
+                    // Return placeholder - will be set on client
+                    return `/donate/${campaignId}`;
+                }
+                return `${window.location.origin}/donate/${campaignId}`;
+            },
+
+            isAdmin: (campaignId, username) => {
+                const campaign = get().getCampaign(campaignId);
+                if (!campaign) return false;
+                return campaign.admins?.some(a => a.username.toLowerCase() === username.toLowerCase()) || false;
+            },
+
+            canManageAdmins: (campaignId, username) => {
+                const campaign = get().getCampaign(campaignId);
+                if (!campaign) return false;
+                // Only creator can manage admins
+                return campaign.creatorUsername?.toLowerCase() === username.toLowerCase();
             },
         }),
         {

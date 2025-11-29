@@ -18,6 +18,56 @@
 
 ---
 
+## 🚀 Quick Start for Beginners
+
+**New to DonateDAO? Start here!** This section gets you up and running in 5 minutes.
+
+### What You Need (Prerequisites)
+
+Before you start, make sure you have:
+
+1. **Node.js** (version 18 or higher) - [Download here](https://nodejs.org/)
+2. **A Cardano Wallet Extension** - Install one of these in your browser:
+   - [Nami Wallet](https://namiwallet.io/) (Recommended for beginners)
+   - [Eternl Wallet](https://eternl.io/)
+   - [Flint Wallet](https://flint-wallet.com/)
+
+### Step-by-Step Setup
+
+```bash
+# Step 1: Clone the project
+git clone https://github.com/your-repo/cardano-donation-dapp.git
+
+# Step 2: Go into the project folder
+cd cardano-donation-dapp
+
+# Step 3: Install all dependencies
+npm install
+
+# Step 4: Start the development server
+npm run dev
+```
+
+**That's it!** Open your browser and go to: `http://localhost:3000`
+
+### What Can You Do?
+
+| Action | How to Do It |
+|--------|--------------|
+| **Create an Account** | Click "Login" → Choose "Wallet" or "Email" authentication |
+| **Browse Campaigns** | Click "Campaigns" in the menu to see all active fundraisers |
+| **Donate to a Campaign** | Click any campaign → Enter amount → Click "Donate" |
+| **Create a Campaign** | Login → Verify Identity → Click "Create" |
+| **Enable 2FA Security** | Profile → Settings → Two-Factor Authentication |
+
+### Demo Credentials (For Testing)
+
+- **Demo Mode**: The app works without real ADA (simulated transactions)
+- **OTP/Email**: Shown in browser alert (no real email sent)
+- **Identity Verification**: 70% success rate (demo simulation)
+
+---
+
 ## 📋 Table of Contents
 
 1. [Overview](#-overview)
@@ -90,17 +140,26 @@ DonateDAO addresses all these issues:
 | Feature | Description |
 |---------|-------------|
 | **Create Campaign** | Launch fundraising campaigns with goals, deadlines, and milestones |
+| **Campaign Modes** | Choose from Normal, Hydra Event, Long Campaign, or Small Campaign modes |
+| **Hydra Event Mode** | ⚡ Fast donations via Hydra Head - lower fees, near-instant confirmations for live events |
 | **Browse Campaigns** | Filter and discover active campaigns by category |
 | **Track Progress** | Real-time funding progress with visual indicators |
 | **Milestone System** | Track fund usage against predefined milestones |
+| **Admin Management** | Add up to 7 admins per campaign with shareable invite links |
+| **Public Sharing** | Share campaign donation links on social media (Twitter, Facebook, LinkedIn, WhatsApp) |
+| **Username-Based Admin** | Add admins by searching unique usernames |
+| **Public Donation Page** | Standalone donation page accessible via shared link |
 
 ### 2. Donation System
 | Feature | Description |
 |---------|-------------|
 | **ADA Donations** | Send donations in ADA cryptocurrency |
+| **Dual Donation Modes** | Normal L1 transactions or Hydra Event Mode for fast, low-fee donations |
+| **Hydra Event Mode** | ⚡ Near-instant confirmations, lower fees, real-time updates for live events |
 | **Quick Amounts** | One-click donation buttons (10, 50, 100 ₳) |
 | **Fee Transparency** | See exact transaction fees before confirming |
 | **Voting Power** | Earn 1 vote per 1 ₳ donated |
+| **Real-time Updates** | Live donation counter updates every 2 seconds for Hydra campaigns |
 
 ### 3. Multi-Signature Withdrawals
 | Feature | Description |
@@ -121,19 +180,102 @@ DonateDAO addresses all these issues:
 ### 5. User Profiles & Dashboard
 | Feature | Description |
 |---------|-------------|
-| **Wallet Authentication** | Login using Cardano wallet (Web3 native) |
+| **Dual Authentication** | Login via Cardano wallet (Web3) or Email/Password (Web2) |
 | **Transaction History** | Complete record of all user transactions |
 | **Data Visualization** | Charts showing donation patterns |
 | **Rank System** | Bronze → Silver → Gold → Platinum → Diamond |
 | **Donation Streaks** | Track consecutive months of giving |
+| **Email Verification** | Secure email verification with verification links |
+| **Profile Management** | Edit profile, link wallet to email account |
 
-### 6. Wallet Integration
+### 6. Authentication System
 | Feature | Description |
 |---------|-------------|
-| **Multi-wallet Support** | Nami, Eternl, Flint, Typhon, Yoroi |
+| **Wallet Authentication** | Connect Cardano wallet (Nami, Eternl, etc.) for Web3 login |
+| **Email Authentication** | Traditional email/password signup and login |
+| **Email Verification** | OTP-based email verification system |
+| **Password Security** | SHA-256 hashing with Web Crypto API |
+| **Forgot Password** | OTP-based password reset (simulated email) |
+| **Two-Factor Authentication** | Optional TOTP-based 2FA with Google Authenticator |
+| **Account Linking** | Link wallet to email account or vice versa |
+| **Custom Captcha** | System-generated captcha for signup protection |
+
+### 7. Security Features
+| Feature | Description |
+|---------|-------------|
+| **Two-Factor Authentication (2FA)** | Optional TOTP-based 2FA compatible with Google Authenticator, Authy, etc. |
+| **2FA Setup QR Codes** | Scan QR code with authenticator app to enable 2FA |
+| **Backup Codes** | 8 one-time backup codes for 2FA recovery (save securely!) |
+| **Identity Verification** | **Required** AI-powered document verification before campaign creation |
+| **Document Types** | Passport, Driving License, or Utility Bill (fallback) |
+| **AI Verification Service** | Centralized service abstraction (`lib/ai/id-verification-service.ts`) |
+| **3-Attempt Limit** | Maximum 3 attempts for passport/license verification |
+| **Utility Bill Fallback** | After 3 failed attempts, users can submit utility bill for manual review |
+| **3-Hour Review Period** | Simulated manual verification for utility bills (realistic delay) |
+| **Verification Status Tracking** | Track verification status: none, pending, verified, failed, under_review |
+| **Password Reset via Email OTP** | Secure password reset using 6-digit OTP sent via email (Brevo API) |
+| **OTP Expiry** | OTP codes expire after 10 minutes |
+| **Rate Limiting** | Protection against OTP spam (built into service) |
+
+### 8. Campaign Sharing & QR Codes
+| Feature | Description |
+|---------|-------------|
+| **QR Code Generator** | Auto-generated QR codes for every campaign donation link |
+| **QR Code Display** | Visible on campaign detail page, dashboard, and my-campaigns |
+| **Show QR Button** | Quick access to QR codes from campaign cards |
+| **QR Download** | One-click save QR as PNG image (high resolution) |
+| **QR Modal** | Beautiful modal popup for QR code viewing |
+| **Copy Link** | One-click copy donation link to clipboard |
+| **Social Media Sharing** | Share to Twitter, Facebook, LinkedIn, WhatsApp |
+| **Admin Invite Links** | Shareable links to add campaign admins |
+| **Public Donation Links** | Direct donation links for social media sharing |
+| **Campaign Images** | Upload custom images (base64, max 500KB, auto-compressed) |
+| **Image Compression** | Automatic resize to 800px max dimension |
+
+### 9. AI-Powered Features & Chatbot
+| Feature | Description |
+|---------|-------------|
+| **Smart Chatbot** | Production-ready knowledge-based chatbot with step-by-step guidance |
+| **Pre-Login Support** | Chatbot works for non-authenticated users (collects email/username) |
+| **Persistent Chat History** | Chat history saved in localStorage (survives page refresh) |
+| **User Data Collection** | Collects email/username for personalized support |
+| **Step-by-Step Guidance** | Detailed instructions for: account creation, verification, campaign creation, donations, 2FA setup |
+| **Agent Handoff** | Connects to human support (Telegram) when needed |
+| **Identity Verification Guidance** | Explains verification process, status checks, next steps |
+| **QR Code Explanations** | Explains how QR codes work and how to use them |
+| **2FA Setup Help** | Guides users through 2FA setup process |
+| **Password Reset Help** | Explains password reset via email OTP |
+| **Document Verification AI** | Centralized AI service abstraction for identity verification |
+| **AI Service Interface** | Clean API boundary for ML model integration (`lib/ai/id-verification-service.ts`) |
+| **Model Training Placeholder** | Ready for TensorFlow.js, ONNX.js, or backend API integration |
+
+### 10. Wallet Integration
+| Feature | Description |
+|---------|-------------|
+| **Multi-wallet Support** | Nami, Eternl, Flint, Typhon, Yoroi, Gero |
 | **CIP-30 Compatible** | Works with any standard Cardano wallet |
 | **Network Detection** | Automatic testnet/mainnet detection |
 | **Balance Display** | Real-time wallet balance |
+| **Wallet Linking** | Add wallet to email-authenticated accounts |
+| **Wallet-only Donations** | Donate without full account (just wallet connection) |
+
+### 11. Visual Design
+| Feature | Description |
+|---------|-------------|
+| **Background Patterns** | Dots, grid, diagonal, mesh gradient patterns |
+| **Animated Backgrounds** | Floating elements, pulsing effects |
+| **Glassmorphism UI** | Modern glass effect on components |
+| **Responsive Design** | Mobile-first, works on all screen sizes |
+
+### 8. AI Chatbot & Support
+| Feature | Description |
+|---------|-------------|
+| **Intelligent Chatbot** | AI-powered assistant with 15+ Q&A knowledge base |
+| **Context-Aware Responses** | Smart keyword matching for instant answers |
+| **Telegram Agent Handoff** | Seamless connection to human agent (Sumanth) via Telegram |
+| **Quick Actions** | One-click buttons for common questions |
+| **Always Available** | Floating chat button on all pages |
+| **Multi-topic Support** | Help with wallet, donations, campaigns, governance, and more |
 
 ---
 
@@ -836,23 +978,60 @@ async function estimateTransactionFee(txSizeBytes: number): Promise<FeeEstimate>
 // With Plutus script: ~0.30-0.50 ADA
 ```
 
+### Telegram Bot API (`app/api/telegram/`)
+
+#### Configuration
+
+```typescript
+const TELEGRAM_BOT_TOKEN = '8405397592:AAF6SdgC5MvVBwlKUuOBO-xEcQG0aDGxlQk';
+const TELEGRAM_API_URL = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
+```
+
+#### Available Endpoints
+
+| Endpoint | Method | Purpose | Returns |
+|----------|--------|---------|---------|
+| `/api/telegram/connect` | POST | Connect user to agent | `{ success, message, chatId }` |
+| `/api/telegram/get-chat-id` | GET | Get all chat IDs | `{ success, chats[] }` |
+| `/api/telegram/webhook` | POST | Receive Telegram messages | `{ ok: true }` |
+| `/api/telegram/webhook?action=set-webhook` | GET | Set webhook URL | `{ success, message }` |
+
+#### Usage Example
+
+```typescript
+// Connect user to Telegram agent
+const response = await fetch('/api/telegram/connect', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    userMessage: 'User needs help with wallet connection',
+    userInfo: { timestamp: new Date().toISOString() }
+  })
+});
+
+const data = await response.json();
+// { success: true, message: 'Connected to agent Sumanth successfully' }
+```
+
 ---
 
 ## 🔐 Authentication System
 
-### Web3 Native Authentication
+DonateDAO supports **dual authentication methods** - both Web3 wallet-based and traditional email/password authentication.
 
-DonateDAO uses **wallet-based authentication** instead of traditional username/password:
+### 1. Wallet Authentication (Web3)
+
+**Wallet-based authentication** - Connect your Cardano wallet for instant login:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                   AUTHENTICATION FLOW                        │
+│              WALLET AUTHENTICATION FLOW                     │
 │                                                              │
 │  1. User clicks "Connect Wallet"                            │
 │                    │                                         │
 │                    ▼                                         │
 │  2. Available wallets detected (CIP-30)                     │
-│     [Nami] [Eternl] [Flint] [Typhon]                       │
+│     [Nami] [Eternl] [Flint] [Typhon] [Gero]               │
 │                    │                                         │
 │                    ▼                                         │
 │  3. User selects wallet                                     │
@@ -865,12 +1044,83 @@ DonateDAO uses **wallet-based authentication** instead of traditional username/p
 │     addr_test1qz2fxv2umyhttkxyxp8x0dlpdt3k6cwng5pxj3jhsydzer3... │
 │                    │                                         │
 │                    ▼                                         │
-│  6. Create/Load user profile in Zustand store               │
+│  6. Optional: Add email/name for better account management  │
 │                    │                                         │
 │                    ▼                                         │
-│  7. User is "logged in" - no password needed!               │
+│  7. Create/Load user profile in Zustand store               │
+│                    │                                         │
+│                    ▼                                         │
+│  8. User is "logged in" - no password needed!               │
 └─────────────────────────────────────────────────────────────┘
 ```
+
+### 2. Email Authentication (Web2)
+
+**Traditional email/password authentication** for users who prefer Web2 login:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│              EMAIL AUTHENTICATION FLOW                       │
+│                                                              │
+│  SIGNUP FLOW:                                                │
+│  1. User clicks "Sign Up"                                    │
+│                    │                                         │
+│                    ▼                                         │
+│  2. Fill registration form:                                  │
+│     - First Name, Last Name                                  │
+│     - Username                                               │
+│     - Email Address                                          │
+│     - Password (min 8 chars, uppercase, lowercase, number)  │
+│     - Confirm Password                                       │
+│     - Complete Captcha                                       │
+│                    │                                         │
+│                    ▼                                         │
+│  3. Password hashed with SHA-256                            │
+│                    │                                         │
+│                    ▼                                         │
+│  4. User profile created in Zustand store                   │
+│                    │                                         │
+│                    ▼                                         │
+│  5. Redirect to profile page                                 │
+│                    │                                         │
+│                    ▼                                         │
+│  6. Email verification link sent                            │
+│                    │                                         │
+│                    ▼                                         │
+│  7. User verifies email via link                            │
+│                                                              │
+│  LOGIN FLOW:                                                 │
+│  1. User enters email & password                            │
+│                    │                                         │
+│                    ▼                                         │
+│  2. Credentials verified against stored hash                │
+│                    │                                         │
+│                    ▼                                         │
+│  3. Load user profile                                        │
+│                    │                                         │
+│                    ▼                                         │
+│  4. User logged in                                           │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 3. Account Linking
+
+Users can link wallet to email account or vice versa:
+
+- **Email → Wallet**: Add wallet address to email-authenticated account
+- **Wallet → Email**: Add email/password to wallet-authenticated account
+- **Both Methods**: Use either wallet or email to login
+
+### Authentication Features
+
+| Feature | Wallet Auth | Email Auth |
+|---------|------------|------------|
+| **Signup Required** | No | Yes (with captcha) |
+| **Password Required** | No | Yes |
+| **Email Verification** | Optional | Required |
+| **Account Recovery** | Via wallet | Via email |
+| **Multi-device** | Yes | Yes |
+| **Security** | Private keys in wallet | Password hashed (SHA-256) |
 
 ### Auth Hook (`lib/hooks/useAuth.ts`)
 
@@ -879,7 +1129,7 @@ function useAuth(): UseAuthReturn {
   return {
     // State
     isConnected: boolean;      // Wallet connected
-    isAuthenticated: boolean;  // Profile loaded
+    isAuthenticated: boolean;  // Profile loaded (wallet or email)
     isLoading: boolean;
     
     // User Data
@@ -904,13 +1154,156 @@ function useAuth(): UseAuthReturn {
 }
 ```
 
+### User Store Auth Methods (`lib/store/userStore.ts`)
+
+```typescript
+interface UserState {
+  // Wallet Authentication
+  login: (walletAddress: string) => Promise<void>;
+  
+  // Email Authentication
+  loginWithEmail: (credentials: {
+    email: string;
+    password: string;
+    firstName?: string;  // Required for signup
+    lastName?: string;   // Required for signup
+    username?: string;   // Required for signup
+  }) => Promise<void>;
+  
+  // Email Verification
+  sendVerificationEmail: () => Promise<void>;
+  verifyEmail: (token: string) => Promise<boolean>;
+  
+  // Account Linking
+  linkWallet: (walletAddress: string) => Promise<void>;
+  
+  // Logout
+  logout: () => void;
+}
+```
+
 ### Security Considerations
 
+**Wallet Authentication:**
 1. **Private Keys Never Leave Wallet**: All signing happens in wallet
 2. **No Password Storage**: Nothing to breach
 3. **Address as Identity**: Cryptographically secure identifier
 4. **Session via Local Storage**: Survives page refresh
 5. **Disconnect = Logout**: Clear and simple
+
+**Email Authentication:**
+1. **Password Hashing**: SHA-256 hashing via Web Crypto API
+2. **Email Verification**: Token-based verification (24-hour expiry)
+3. **Captcha Protection**: Custom captcha prevents bot signups
+4. **Secure Storage**: Passwords stored as hashes in localStorage
+5. **Session Management**: Profile persists across sessions
+
+**Best Practices:**
+- Use wallet auth for maximum security
+- Link email to wallet account for recovery options
+- Verify email for important notifications
+- Use strong passwords (min 8 chars, mixed case, numbers)
+
+---
+
+## 🤖 AI Chatbot & Support System
+
+### Overview
+
+DonateDAO includes an intelligent chatbot that helps users with common questions and seamlessly connects them to a human agent via Telegram when needed.
+
+### Features
+
+- **15+ Q&A Knowledge Base**: Instant answers to common questions
+- **Smart Keyword Matching**: Context-aware responses
+- **Telegram Agent Handoff**: Connect to human agent (Sumanth) when needed
+- **Always Available**: Floating chat button on all pages
+- **Quick Actions**: One-click buttons for common questions
+
+### Knowledge Base Topics
+
+The chatbot can help with:
+
+| Topic | Questions Covered |
+|-------|------------------|
+| **Wallet Connection** | How to connect, supported wallets, connection issues |
+| **Donations** | How to donate, donation process, transaction fees |
+| **Campaigns** | Creating campaigns, managing campaigns, campaign status |
+| **Withdrawals** | How to withdraw, withdrawal process, approval |
+| **Email Verification** | Verify email, resend verification, email issues |
+| **Governance** | Voting, proposals, voting power |
+| **Security** | Account security, transaction safety |
+| **General** | Platform features, network info, troubleshooting |
+
+### Chatbot Component (`components/Chatbot.tsx`)
+
+```typescript
+interface ChatbotProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+// Usage
+<Chatbot isOpen={isOpen} onClose={() => setIsOpen(false)} />
+```
+
+### Chatbot Flow
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    CHATBOT FLOW                              │
+│                                                              │
+│  1. User clicks chat button (bottom-right)                   │
+│                    │                                         │
+│                    ▼                                         │
+│  2. Chatbot opens with welcome message                       │
+│                    │                                         │
+│                    ▼                                         │
+│  3. User asks question                                       │
+│                    │                                         │
+│                    ▼                                         │
+│  4. Bot searches knowledge base                             │
+│                    │                                         │
+│         ┌──────────┴──────────┐                             │
+│         │                     │                             │
+│         ▼                     ▼                             │
+│   Answer Found          No Answer Found                     │
+│         │                     │                             │
+│         │                     ▼                             │
+│         │            Offer to connect to agent              │
+│         │                     │                             │
+│         │                     ▼                             │
+│         │            User clicks "Connect to Agent"         │
+│         │                     │                             │
+│         │                     ▼                             │
+│         │            Message sent to Telegram                │
+│         │                     │                             │
+│         │                     ▼                             │
+│         │            Agent (Sumanth) receives message       │
+│         │                     │                             │
+│         │                     ▼                             │
+│         │            Agent responds via Telegram            │
+│         │                                                     │
+│         ▼                                                     │
+│   User gets instant answer                                   │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Telegram Integration
+
+The chatbot integrates with Telegram Bot API to connect users to a human agent:
+
+**Setup Required:**
+1. Get Telegram bot token (already configured)
+2. Get agent chat ID: Visit `/api/telegram/get-chat-id`
+3. Set environment variable: `TELEGRAM_AGENT_CHAT_ID=your_chat_id`
+
+**API Endpoints:**
+- `POST /api/telegram/connect` - Send user message to agent
+- `GET /api/telegram/get-chat-id` - Get all chat IDs
+- `POST /api/telegram/webhook` - Receive messages from Telegram
+
+See `TELEGRAM_SETUP.md` for detailed setup instructions.
 
 ---
 
@@ -923,9 +1316,35 @@ cardano-donation-dapp/
 │   ├── 📂 admin/
 │   │   ├── page.tsx                 # Admin dashboard (SSR wrapper)
 │   │   └── Content.tsx              # Admin content (CSR)
+│   ├── 📂 api/
+│   │   └── 📂 telegram/
+│   │       ├── 📂 connect/
+│   │       │   └── route.ts         # Telegram agent connection API
+│   │       ├── 📂 get-chat-id/
+│   │       │   └── route.ts         # Get Telegram chat IDs
+│   │       └── 📂 webhook/
+│   │           └── route.ts         # Telegram webhook handler
 │   ├── 📂 auth/
 │   │   ├── page.tsx                 # Auth page (SSR wrapper)
-│   │   └── AuthContent.tsx          # Auth content (CSR)
+│   │   ├── AuthContent.tsx          # Auth content (CSR)
+│   │   ├── 📂 login/
+│   │   │   ├── page.tsx             # Login page (SSR wrapper)
+│   │   │   └── LoginContent.tsx     # Login form with 2FA support (CSR)
+│   │   ├── 📂 signup/
+│   │   │   ├── page.tsx             # Signup page (SSR wrapper)
+│   │   │   └── SignupContent.tsx    # Signup form with captcha (CSR)
+│   │   ├── 📂 verify-email/
+│   │   │   ├── page.tsx             # Email verification (SSR wrapper)
+│   │   │   └── VerifyEmailContent.tsx # Verification handler (CSR)
+│   │   ├── 📂 forgot-password/
+│   │   │   ├── page.tsx             # Forgot password (SSR wrapper)
+│   │   │   └── ForgotPasswordContent.tsx # OTP-based reset (CSR)
+│   │   ├── 📂 reset-password/
+│   │   │   ├── page.tsx             # Reset password (SSR wrapper)
+│   │   │   └── ResetPasswordContent.tsx # New password form (CSR)
+│   │   └── 📂 verify-identity/
+│   │       ├── page.tsx             # Identity verification (SSR wrapper)
+│   │       └── VerifyIdentityContent.tsx # Document upload (CSR)
 │   ├── 📂 campaigns/
 │   │   ├── 📂 [id]/
 │   │   │   ├── page.tsx             # Campaign detail (SSR wrapper)
@@ -933,11 +1352,18 @@ cardano-donation-dapp/
 │   │   │   ├── 📂 edit/
 │   │   │   │   ├── page.tsx         # Edit page (SSR wrapper)
 │   │   │   │   └── Content.tsx      # Edit content (CSR)
-│   │   │   └── 📂 withdraw/
-│   │   │       ├── page.tsx         # Withdraw page (SSR wrapper)
-│   │   │       └── Content.tsx      # Withdraw content (CSR)
+│   │   │   ├── 📂 withdraw/
+│   │   │   │   ├── page.tsx         # Withdraw page (SSR wrapper)
+│   │   │   │   └── Content.tsx      # Withdraw content (CSR)
+│   │   │   └── 📂 admin-invite/
+│   │   │       ├── page.tsx         # Admin invite page (SSR wrapper)
+│   │   │       └── AdminInviteContent.tsx # Accept admin invitation (CSR)
 │   │   ├── page.tsx                 # Campaign listing (SSR wrapper)
 │   │   └── CampaignsContent.tsx     # Campaigns list (CSR)
+├── 📂 donate/
+│   │   └── 📂 [id]/
+│   │       ├── page.tsx             # Public donation page (SSR wrapper)
+│   │       └── DonateContent.tsx    # Donation form (CSR)
 │   ├── 📂 create/
 │   │   ├── page.tsx                 # Create page (SSR wrapper)
 │   │   └── Content.tsx              # Create form (CSR)
@@ -963,7 +1389,17 @@ cardano-donation-dapp/
 │   ├── Header.tsx                   # Navigation header with auth
 │   ├── PageWrapper.tsx              # Generic page wrapper component
 │   ├── Charts.tsx                   # Recharts wrapper components
-│   └── WalletConnect.tsx            # Wallet connection button
+│   ├── WalletConnect.tsx            # Wallet connection button
+│   ├── Chatbot.tsx                  # AI chatbot with step-by-step guidance
+│   ├── ChatbotButton.tsx            # Floating chat button
+│   ├── Captcha.tsx                  # Custom captcha component
+│   ├── WalletInfoModal.tsx          # Modal for wallet users to add email
+│   ├── AdminManagement.tsx          # Campaign admin management component
+│   ├── QRCodeGenerator.tsx          # QR code generator with download
+│   ├── ImageUpload.tsx              # Image upload with compression
+│   ├── TwoFactorSetup.tsx           # 2FA setup with QR code
+│   ├── TwoFactorVerify.tsx          # 2FA verification modal
+│   └── DocumentVerification.tsx     # Identity verification component
 │
 ├── 📂 lib/                          # Utilities & helpers
 │   ├── 📂 api/
@@ -971,13 +1407,22 @@ cardano-donation-dapp/
 │   ├── 📂 cardano/
 │   │   ├── transactions.ts          # Transaction builders
 │   │   └── wallet.ts                # Wallet utilities
+│   ├── 📂 hydra/
+│   │   └── hydraGateway.ts          # Hydra Gateway Service for Event Mode
 │   ├── 📂 hooks/
 │   │   ├── useAuth.ts               # Authentication hook (client-side guards)
 │   │   └── useTransaction.ts        # Transaction management hook
-│   └── 📂 store/
-│       ├── userStore.ts             # Zustand user state management
-│       ├── campaignStore.ts         # Zustand campaign state management
-│       └── syncStore.ts             # Data synchronization store
+│   ├── 📂 store/
+│   │   ├── userStore.ts             # Zustand user state management
+│   │   ├── campaignStore.ts         # Zustand campaign state management
+│   │   └── syncStore.ts             # Data synchronization store
+│   ├── 📂 verification/
+│   │   └── documentVerifier.ts      # Mock AI document verification
+│   └── 📂 utils/
+│       ├── password.ts              # Password hashing utilities
+│       ├── telegram.ts              # Telegram bot utilities
+│       ├── otp.ts                   # OTP generation/verification
+│       └── totp.ts                  # TOTP for 2FA (Google Authenticator)
 │
 ├── 📂 validators/                   # Aiken smart contracts (Plutus V3)
 │   ├── 📂 validators/
@@ -1006,7 +1451,8 @@ cardano-donation-dapp/
 │   ├── ENV_SETUP.md                 # Environment setup guide
 │   ├── COMPONENTS_README.md         # Component documentation
 │   ├── ERROR_FIXES.md               # Common error solutions
-│   └── COMMON_ISSUES.md             # FAQ & troubleshooting
+│   ├── COMMON_ISSUES.md             # FAQ & troubleshooting
+│   └── TELEGRAM_SETUP.md            # Telegram bot setup guide
 │
 └── 📄 Scripts
     └── setup-github.sh              # GitHub repository setup
@@ -1090,6 +1536,16 @@ NEXT_PUBLIC_BLOCKFROST_API_KEY=preprodYOURAPIKEYHERE
 
 # Network (preprod for testing, mainnet for production)
 NEXT_PUBLIC_NETWORK=preprod
+
+# Email Service (required for OTP emails)
+# Get API key from https://www.brevo.com
+BREVO_API_KEY=your_brevo_api_key_here
+
+# AI Verification Service (optional - for production ML model)
+# Option 1: Use backend API endpoint
+# AI_VERIFICATION_API_URL=https://your-ai-service.com/api/verify
+# Option 2: Use local TensorFlow.js model
+# AI_VERIFICATION_MODEL_PATH=/models/id-verification-v1.json
 
 # Contract Addresses (after deployment)
 NEXT_PUBLIC_CAMPAIGN_SCRIPT_ADDRESS=addr_test1...
@@ -1246,6 +1702,365 @@ source = "github"
 
 ## 📖 Usage Guide
 
+### Creating Campaigns with Different Modes
+
+#### Campaign Mode Selection
+
+When creating a campaign, you can choose from four different modes:
+
+1. **Normal Mode (Default)**
+   - Standard L1 transactions
+   - ~0.2 ADA per transaction
+   - ~20 seconds confirmation time
+   - Best for: Regular campaigns, long-term fundraising
+
+2. **Hydra Event Mode** ⚡
+   - Fast donations via Hydra Head
+   - Lower fees (aggregated)
+   - Near-instant confirmations
+   - Real-time UI updates (every 2 seconds)
+   - Best for: Live events, livestream fundraisers, charity marathons
+   - After event: Hydra Head settles to L1 in one aggregated transaction
+
+3. **Long Campaign Mode**
+   - Extended duration campaigns
+   - Flexible milestones
+   - Best for: Multi-year projects, infrastructure development
+
+4. **Small Campaign Mode**
+   - Quick campaigns with smaller goals
+   - Best for: Small community projects, quick funding needs
+
+#### How to Create a Hydra Event Campaign
+
+1. **Navigate to Create Page:**
+   - Click "Create Campaign" in the header
+   - Fill in campaign details (title, description, goal, etc.)
+
+2. **Select Hydra Event Mode:**
+   - In the "Campaign Mode" dropdown, select "⚡ Hydra Event Mode"
+   - You'll see a description: "Fast donations via Hydra Head. Lower fees, near-instant confirmations. Perfect for livestream fundraisers and charity marathons."
+
+3. **Complete Campaign Creation:**
+   - Fill in remaining details
+   - Click "Create Campaign"
+   - Your campaign will be marked with a "⚡ Hydra" badge
+
+4. **Donors Experience:**
+   - Donors see "⚡ Hydra Event Mode Active" indicator
+   - Donations are processed instantly
+   - Real-time counter updates every 2 seconds
+   - Lower fees compared to normal mode
+
+### Campaign Admin Management
+
+#### Adding Admins to Your Campaign
+
+1. **Go to Your Campaign:**
+   - Navigate to your campaign detail page
+   - Scroll to the "Campaign Management" section (only visible to creator)
+
+2. **Add Admin by Username:**
+   - Enter the username in the search box
+   - Click "Search" to verify the username exists
+   - Click "Add Admin" to add them
+   - Maximum 7 admins per campaign (including creator)
+
+3. **Share Admin Invite Link:**
+   - Copy the admin invite link
+   - Share it with users you want to add as admins
+   - They can visit the link to accept the invitation
+
+#### Admin Invitation Flow
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│              ADMIN INVITATION FLOW                           │
+│                                                              │
+│  1. Campaign creator generates invite link                  │
+│                    │                                         │
+│                    ▼                                         │
+│  2. Creator shares link with potential admin                │
+│                    │                                         │
+│                    ▼                                         │
+│  3. User visits /campaigns/[id]/admin-invite               │
+│                    │                                         │
+│                    ▼                                         │
+│  4. User must be logged in                                  │
+│                    │                                         │
+│                    ▼                                         │
+│  5. User clicks "Accept Invitation"                         │
+│                    │                                         │
+│                    ▼                                         │
+│  6. User is added as admin                                  │
+│                    │                                         │
+│                    ▼                                         │
+│  7. Redirect to campaign page                                │
+└─────────────────────────────────────────────────────────────┘
+```
+
+#### Username Requirements
+
+- **Unique**: Each username must be unique across all users
+- **Minimum Length**: 3 characters
+- **Allowed Characters**: Letters, numbers, and underscores only
+- **Case Insensitive**: Usernames are stored in lowercase
+
+### Campaign Sharing
+
+#### Public Donation Link
+
+Every campaign automatically gets a public donation link:
+- **Format**: `/donate/[campaign-id]`
+- **Access**: Anyone can visit and donate (no login required)
+- **Features**: 
+  - Full campaign information
+  - Progress tracking
+  - Direct wallet donation
+  - Social sharing buttons
+
+#### Social Media Sharing
+
+Share your campaign on:
+- **Twitter**: Pre-filled tweet with campaign link
+- **Facebook**: Share dialog with campaign link
+- **LinkedIn**: Professional sharing
+- **WhatsApp**: Direct message sharing
+
+#### Sharing Flow
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│              CAMPAIGN SHARING FLOW                           │
+│                                                              │
+│  1. Campaign creator goes to campaign page                  │
+│                    │                                         │
+│                    ▼                                         │
+│  2. Scroll to "Campaign Management" section                  │
+│                    │                                         │
+│                    ▼                                         │
+│  3. Copy public donation link                               │
+│                    │                                         │
+│                    ▼                                         │
+│  4. Share via:                                               │
+│     - Social media buttons (Twitter, Facebook, etc.)        │
+│     - Direct link sharing                                    │
+│     - Email, messaging apps                                  │
+│                    │                                         │
+│                    ▼                                         │
+│  5. Recipients visit /donate/[id]                           │
+│                    │                                         │
+│                    ▼                                         │
+│  6. They can donate directly with wallet                     │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 📖 Usage Guide (Continued)
+
+### Identity Verification (Required for Campaign Creators)
+
+Before creating campaigns, you must verify your identity. This protects donors from scams.
+
+#### How to Verify Your Identity
+
+1. **Go to Verify Page:**
+   - Click "Create Campaign" when logged in
+   - If not verified, you'll be redirected to `/auth/verify-identity`
+
+2. **Choose Document Type:**
+   - **Passport** 🛂 - Upload photo of passport
+   - **Driving License** 🪪 - Upload photo of license
+
+3. **Upload Document:**
+   - Click document button to open file picker
+   - Select a clear photo of your document
+   - Preview will show before submission
+
+4. **Wait for AI Verification:**
+   - Our AI analyzes your document (2-4 seconds)
+   - 70% success rate for demo (real system would be higher)
+   - You get 3 attempts
+
+5. **If Failed 3 Times:**
+   - **Utility Bill Option** becomes available
+   - Upload a recent electricity/water bill
+   - Manual review takes up to 3 hours
+
+#### Verification Status
+
+| Status | Meaning |
+|--------|---------|
+| ✅ Verified | Identity confirmed, can create campaigns |
+| 🔍 Under Review | Utility bill being manually reviewed |
+| ❌ Failed | Verification failed, try again |
+| ⏳ Pending | Document being analyzed |
+
+---
+
+### Two-Factor Authentication (2FA)
+
+Add extra security to your account with Google Authenticator.
+
+#### Setting Up 2FA
+
+1. **Go to Profile → Settings**
+2. **Find "Two-Factor Authentication"**
+3. **Click "Enable 2FA"**
+4. **Scan QR Code:**
+   - Open Google Authenticator app
+   - Tap "+" to add new
+   - Scan the QR code shown
+5. **Enter 6-Digit Code:**
+   - Enter the code from your authenticator
+   - Click "Verify & Enable"
+6. **Save Backup Codes:**
+   - 8 one-time codes are generated
+   - Save them securely (you need them if you lose your phone)
+
+#### Using 2FA on Login
+
+1. Enter email and password
+2. Modal appears asking for 2FA code
+3. Open authenticator app
+4. Enter the current 6-digit code
+5. Click "Verify" to complete login
+
+#### Backup Codes
+
+- Each backup code works only once
+- Use if you lose access to your authenticator
+- 8 characters, alphanumeric
+- Can regenerate by disabling and re-enabling 2FA
+
+---
+
+### Forgot Password (Password Reset)
+
+Reset your password using email OTP.
+
+#### Steps to Reset Password
+
+1. **Go to Login Page**
+2. **Click "Forgot Password?"**
+3. **Enter Your Email:**
+   - Must be a registered email
+   - OTP will be shown in alert (demo mode)
+4. **Enter 6-Digit OTP:**
+   - Check the alert popup for your OTP
+   - Enter it on the verification page
+   - OTP expires in 10 minutes
+5. **Create New Password:**
+   - Minimum 8 characters
+   - Confirm password
+   - Click "Reset Password"
+6. **Login with New Password**
+
+#### Notes
+
+- Demo mode: OTP shown in browser alert
+- Production: OTP would be sent via email
+- If OTP expires, click "Resend OTP"
+
+---
+
+### QR Codes for Campaign Sharing
+
+Every campaign gets an auto-generated QR code.
+
+#### Finding Your QR Code
+
+1. Go to your campaign page
+2. Scroll to "Campaign Management" section
+3. QR code is displayed above sharing links
+
+#### Downloading QR Code
+
+1. Click "Save QR" button
+2. PNG file downloads with campaign name
+3. Use for:
+   - Posters and flyers
+   - Event displays
+   - Social media posts
+   - Email campaigns
+
+#### QR Code Features
+
+- **High Quality**: Generated at 2x resolution
+- **Error Correction**: Level H (30% recovery)
+- **Scannable**: Works with any QR scanner
+- **Clean Design**: White background, black code
+
+---
+
+### Campaign Images
+
+Add visual appeal with custom campaign images.
+
+#### Uploading an Image
+
+1. **On Create Campaign Page:**
+   - Find "Campaign Image (Optional)" section
+   - Click the dashed box or drag an image
+
+2. **Image Processing:**
+   - Automatic compression (max 800px dimension)
+   - Max file size: 500KB
+   - Supports: JPG, PNG, GIF, WebP
+
+3. **Preview:**
+   - Image shows immediately after upload
+   - Hover to see "Remove Image" button
+
+#### Where Images Display
+
+- Campaign cards on browse page
+- Campaign detail page hero
+- Public donation page
+- QR code downloads (filename includes campaign title)
+
+---
+
+### AI Chatbot Assistant
+
+Get instant help from our AI chatbot.
+
+#### Accessing the Chatbot
+
+- **Floating Button**: Click 🤖 button (bottom-right corner)
+- **Available**: On every page of the app
+
+#### What the Chatbot Helps With
+
+| Topic | Example Questions |
+|-------|-------------------|
+| Wallet | "How do I connect my wallet?" |
+| Donations | "How do I donate to a campaign?" |
+| Campaigns | "How do I create a campaign?" |
+| Verification | "How do I verify my identity?" |
+| 2FA | "How do I set up 2FA?" |
+| Password | "How do I reset my password?" |
+| Admin | "How do I add admins to my campaign?" |
+
+#### Chatbot Features
+
+- **Step-by-Step Guides**: Detailed instructions for complex tasks
+- **Quick Actions**: Pre-filled buttons for common questions
+- **Chat History**: Saved across sessions (localStorage)
+- **User Data Collection**: Email/username for follow-up
+- **Human Handoff**: Connect to agent Sumanth via Telegram
+
+#### Connecting to Human Support
+
+If the chatbot can't help:
+1. It will ask if you want to connect to an agent
+2. Click "Connect to Agent Sumanth"
+3. Message is sent to Telegram
+4. Agent will respond via Telegram
+
+---
+
 ### For Donors
 
 #### 1. Connect Wallet
@@ -1290,10 +2105,37 @@ source = "github"
 5. Click "Create Campaign"
 6. Sign transaction
 
-#### 2. Monitor Campaign
+#### 2. Manage Campaign Admins
+1. Go to your campaign detail page
+2. Scroll to "Campaign Management" section
+3. **Add Admin by Username:**
+   - Enter username in search box
+   - Click "Search" to verify
+   - Click "Add Admin"
+   - Maximum 7 admins per campaign
+4. **Share Admin Invite Link:**
+   - Copy the admin invite link
+   - Share with users you want as admins
+   - They visit the link to accept
+
+#### 3. Share Campaign
+1. Go to campaign detail page
+2. Scroll to "Campaign Management" section
+3. **Copy Public Donation Link:**
+   - Copy the public donation link
+   - Share on social media, email, messaging
+4. **Social Media Sharing:**
+   - Click Twitter, Facebook, LinkedIn, or WhatsApp buttons
+   - Pre-filled messages with campaign link
+5. **Direct Link Sharing:**
+   - Anyone can visit `/donate/[campaign-id]`
+   - No login required to donate
+
+#### 4. Monitor Campaign
 1. View in `/profile` under "Your Campaigns"
 2. Track donations in real-time
 3. See milestone progress
+4. View admin list and manage admins
 
 ### For Admins
 
@@ -1319,9 +2161,10 @@ source = "github"
 
 ### Donation Flow
 
+#### Normal Mode (L1 Transactions)
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    DONATION FLOW                             │
+│              NORMAL MODE DONATION FLOW                        │
 └─────────────────────────────────────────────────────────────┘
 
 User clicks "Donate"
@@ -1387,6 +2230,69 @@ User clicks "Donate"
 │ - Add transaction │
 │ - Update stats    │
 │ - Add voting power│
+└───────────────────┘
+```
+
+#### Hydra Event Mode (Fast Donations)
+```
+┌─────────────────────────────────────────────────────────────┐
+│           HYDRA EVENT MODE DONATION FLOW                      │
+└─────────────────────────────────────────────────────────────┘
+
+User clicks "Donate" (Hydra-enabled campaign)
+        │
+        ▼
+┌───────────────────┐
+│ Frontend detects  │
+│ Hydra Event Mode  │
+│ (campaignMode)    │
+└───────────────────┘
+        │
+        ▼
+┌───────────────────┐
+│ Initialize Hydra  │
+│ Head if needed    │
+│ (via Gateway)     │
+└───────────────────┘
+        │
+        ▼
+┌───────────────────┐
+│ Process donation  │
+│ via Hydra Gateway │
+│ - Lower fees      │
+│ - Near-instant    │
+└───────────────────┘
+        │
+        ▼
+┌───────────────────┐
+│ Donation recorded │
+│ in Hydra Head     │
+│ (confirmed)       │
+└───────────────────┘
+        │
+        ▼
+┌───────────────────┐
+│ Real-time UI      │
+│ updates instantly │
+│ (every 2 seconds) │
+└───────────────────┘
+        │
+        ▼
+┌───────────────────┐
+│ Update Zustand    │
+│ store:            │
+│ - Add transaction │
+│ - Update stats    │
+│ - Add voting power│
+└───────────────────┘
+        │
+        ▼
+┌───────────────────┐
+│ After event ends: │
+│ Hydra Head settles│
+│ to L1 (aggregated)│
+│ - Single TX       │
+│ - All donations   │
 └───────────────────┘
         │
         ▼
@@ -1693,6 +2599,8 @@ curl -s -o /dev/null -w "%{http_code}" "http://localhost:3000/create" && echo " 
 curl -s -o /dev/null -w "%{http_code}" "http://localhost:3000/admin" && echo " - Admin"
 curl -s -o /dev/null -w "%{http_code}" "http://localhost:3000/dashboard" && echo " - Dashboard"
 curl -s -o /dev/null -w "%{http_code}" "http://localhost:3000/my-campaigns" && echo " - My Campaigns"
+curl -s -o /dev/null -w "%{http_code}" "http://localhost:3000/donate/mock_1" && echo " - Public Donation"
+curl -s -o /dev/null -w "%{http_code}" "http://localhost:3000/campaigns/mock_1/admin-invite" && echo " - Admin Invite"
 ```
 
 All should return `200`.
@@ -1784,6 +2692,30 @@ limitations under the License.
 ---
 
 ## 📝 Changelog
+
+### v1.3.0 (November 2025) - Campaign Admin Management & Sharing
+
+#### ✨ New Features
+- **Campaign Admin Management**: Add up to 7 admins per campaign by username
+- **Admin Invitation System**: Shareable invite links for adding campaign admins
+- **Public Donation Pages**: Standalone donation pages accessible via shared links
+- **Social Media Sharing**: Share campaigns on Twitter, Facebook, LinkedIn, WhatsApp
+- **Username Uniqueness**: Enforced unique usernames across all users
+- **Username Search**: Find users by username to add as admins
+
+#### 🔧 Improvements
+- Enhanced campaign detail page with admin management section
+- Improved campaign creation with automatic admin initialization
+- Better user profile management with username validation
+
+#### 📄 New Pages
+- `/campaigns/[id]/admin-invite` - Admin invitation acceptance page
+- `/donate/[id]` - Public donation page (no login required)
+
+#### 🧩 New Components
+- `AdminManagement.tsx` - Campaign admin management UI
+- `AdminInviteContent.tsx` - Admin invitation acceptance
+- `DonateContent.tsx` - Public donation page
 
 ### v1.2.0 (November 2025) - SSR/CSR Architecture Fix
 

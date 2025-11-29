@@ -17,9 +17,10 @@ function WalletSectionContent({ section }: WalletSectionProps) {
         case 'greeting':
             if (!isAuthenticated || !profile) return null;
             return (
-                <div className="inline-flex items-center gap-2 glass px-4 py-2 rounded-full text-sm mb-4">
-                    <span className="text-xl">{profile.avatar}</span>
-                    <span>Welcome back, <strong>{profile.displayName}</strong>!</span>
+                <div className="inline-flex items-center gap-3 glass-hover px-5 py-3 rounded-2xl mb-6 animate-fade-in">
+                    <span className="text-2xl animate-bounce-subtle">{profile.avatar}</span>
+                    <span className="text-foreground/80">Welcome back, <strong className="text-gradient">{profile.displayName}</strong>!</span>
+                    <span className="badge badge-accent text-xs">{stats.rank}</span>
                 </div>
             );
 
@@ -28,28 +29,31 @@ function WalletSectionContent({ section }: WalletSectionProps) {
                 <>
                     <Link
                         href="/create"
-                        className="gradient-primary px-8 py-4 rounded-lg font-semibold text-white hover:opacity-90 transition-opacity shadow-lg shadow-primary/20"
+                        className="btn-primary text-lg px-8 py-4 flex items-center gap-2"
                     >
-                        Create Campaign
+                        <span>✨</span> Create Campaign
                     </Link>
                     <Link
                         href="/profile"
-                        className="glass px-8 py-4 rounded-lg font-semibold hover:bg-white/10 transition-colors"
+                        className="btn-secondary text-lg px-8 py-4 flex items-center gap-2"
                     >
-                        My Dashboard
+                        <span>📊</span> My Dashboard
                     </Link>
                 </>
             ) : (
                 <>
                     <Link
                         href="/auth"
-                        className="gradient-primary px-8 py-4 rounded-lg font-semibold text-white hover:opacity-90 transition-opacity shadow-lg shadow-primary/20"
+                        className="btn-primary text-lg px-8 py-4 flex items-center gap-2"
                     >
                         Get Started
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        </svg>
                     </Link>
                     <Link
                         href="/campaigns"
-                        className="glass px-8 py-4 rounded-lg font-semibold hover:bg-white/10 transition-colors"
+                        className="btn-secondary text-lg px-8 py-4"
                     >
                         Explore Campaigns
                     </Link>
@@ -59,30 +63,36 @@ function WalletSectionContent({ section }: WalletSectionProps) {
         case 'user-stats':
             if (!isAuthenticated || !stats) return null;
             return (
-                <section className="container mx-auto px-6 py-8">
-                    <div className="glass p-6 rounded-xl">
-                        <h3 className="text-xl font-bold mb-4">Your Impact</h3>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <div className="text-center p-4 bg-white/5 rounded-lg">
-                                <p className="text-2xl font-bold text-primary">{(stats.totalDonated / 1_000_000).toFixed(0)} ₳</p>
-                                <p className="text-sm text-foreground/60">Total Donated</p>
-                            </div>
-                            <div className="text-center p-4 bg-white/5 rounded-lg">
-                                <p className="text-2xl font-bold text-secondary">{stats.campaignsSupported}</p>
-                                <p className="text-sm text-foreground/60">Campaigns Supported</p>
-                            </div>
-                            <div className="text-center p-4 bg-white/5 rounded-lg">
-                                <p className="text-2xl font-bold text-accent">{stats.votesCount}</p>
-                                <p className="text-sm text-foreground/60">Votes Cast</p>
-                            </div>
-                            <div className="text-center p-4 bg-white/5 rounded-lg">
-                                <p className="text-2xl font-bold">{stats.donationStreak} 🔥</p>
-                                <p className="text-sm text-foreground/60">Month Streak</p>
-                            </div>
+                <section className="container mx-auto px-6 py-12">
+                    <div className="glass-hover p-8 rounded-2xl border-gradient animate-fade-in">
+                        <div className="flex items-center justify-between mb-6">
+                            <h3 className="text-2xl font-bold flex items-center gap-2">
+                                <span className="text-3xl">🏆</span> Your Impact
+                            </h3>
+                            <span className="badge badge-accent">{stats.rank}</span>
                         </div>
-                        <div className="mt-4 text-center">
-                            <Link href="/profile" className="text-primary hover:underline text-sm">
-                                View full dashboard →
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            {[
+                                { value: `${(stats.totalDonated / 1_000_000).toFixed(0)}`, unit: '₳', label: 'Total Donated', icon: '💎', color: 'primary' },
+                                { value: stats.campaignsSupported, unit: '', label: 'Campaigns Supported', icon: '❤️', color: 'secondary' },
+                                { value: stats.votesCount, unit: '', label: 'Votes Cast', icon: '🗳️', color: 'accent' },
+                                { value: stats.donationStreak, unit: '', label: 'Month Streak', icon: '🔥', color: 'warm' },
+                            ].map((stat, i) => (
+                                <div key={i} className="text-center p-5 bg-white/5 rounded-xl hover:bg-white/10 transition-colors group">
+                                    <span className="text-2xl group-hover:scale-125 inline-block transition-transform">{stat.icon}</span>
+                                    <p className={`text-3xl font-bold text-${stat.color} mt-2`}>
+                                        {stat.value}{stat.unit && <span className="text-xl">{stat.unit}</span>}
+                                    </p>
+                                    <p className="text-sm text-foreground/50 mt-1">{stat.label}</p>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="mt-6 text-center">
+                            <Link href="/profile" className="inline-flex items-center gap-2 text-primary hover:gap-3 transition-all font-medium">
+                                View full dashboard
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                </svg>
                             </Link>
                         </div>
                     </div>
@@ -93,9 +103,20 @@ function WalletSectionContent({ section }: WalletSectionProps) {
             return (
                 <Link
                     href={isAuthenticated ? "/create" : "/auth"}
-                    className="gradient-primary px-10 py-5 rounded-lg font-semibold text-white hover:opacity-90 transition-opacity inline-block shadow-xl shadow-primary/30"
+                    className="inline-flex items-center gap-2 bg-white text-primary px-10 py-5 rounded-xl font-bold text-lg hover:bg-white/90 transition-all hover:scale-105 shadow-2xl"
                 >
-                    {isAuthenticated ? 'Create Campaign' : 'Get Started Now'}
+                    {isAuthenticated ? (
+                        <>
+                            <span>✨</span> Create Campaign
+                        </>
+                    ) : (
+                        <>
+                            Start Your Journey
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                            </svg>
+                        </>
+                    )}
                 </Link>
             );
 

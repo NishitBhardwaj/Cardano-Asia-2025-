@@ -7,18 +7,25 @@ import { MeshProvider } from '@meshsdk/react';
 import useAuth from '@/lib/hooks/useAuth';
 import { useUserStore } from '@/lib/store/userStore';
 import Header from '@/components/Header';
+import QRModal from '@/components/QRModal';
 
 function MyCampaignsPageInner() {
     const router = useRouter();
     const { isAuthenticated, walletAddress, profile } = useAuth();
-    const { campaigns } = useUserStore();
+    const { campaigns, _hasHydrated } = useUserStore();
     const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all');
+    const [mounted, setMounted] = useState(false);
+    const [qrModal, setQrModal] = useState<{ campaignId: string; title: string } | null>(null);
 
     useEffect(() => {
-        if (!isAuthenticated) {
+        setMounted(true);
+    }, []);
+
+    useEffect(() => {
+        if (mounted && _hasHydrated && !isAuthenticated) {
             router.push('/auth');
         }
-    }, [isAuthenticated, router]);
+    }, [isAuthenticated, router, mounted, _hasHydrated]);
 
     const filteredCampaigns = campaigns.filter(c => {
         if (filter === 'all') return true;
@@ -32,10 +39,13 @@ function MyCampaignsPageInner() {
         totalRaised: campaigns.reduce((sum, c) => sum + c.raised, 0),
     };
 
-    if (!isAuthenticated) {
+    if (!mounted || !_hasHydrated || !isAuthenticated) {
         return (
             <div className="min-h-screen bg-background flex items-center justify-center">
-                <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                <div className="text-center space-y-4">
+                    <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+                    <p className="text-foreground/60">Loading campaigns...</p>
+                </div>
             </div>
         );
     }
@@ -140,6 +150,13 @@ function MyCampaignsPageInner() {
                                             >
                                                 Edit
                                             </Link>
+                                            <button
+                                                onClick={() => setQrModal({ campaignId: campaign.id, title: campaign.title })}
+                                                className="flex-1 glass py-2 rounded-lg text-sm font-medium hover:bg-white/10"
+                                                title="Show QR Code"
+                                            >
+                                                QR
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -160,6 +177,16 @@ function MyCampaignsPageInner() {
                     </div>
                 )}
             </div>
+
+            {/* QR Modal */}
+            {qrModal && (
+                <QRModal
+                    campaignId={qrModal.campaignId}
+                    campaignTitle={qrModal.title}
+                    isOpen={!!qrModal}
+                    onClose={() => setQrModal(null)}
+                />
+            )}
         </div>
     );
 }

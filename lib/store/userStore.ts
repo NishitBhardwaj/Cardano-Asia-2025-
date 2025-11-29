@@ -9,19 +9,26 @@
 
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import { hashPassword, verifyPassword } from '@/lib/utils/password';
 
 // ============================================================================
 // TYPE DEFINITIONS
 // ============================================================================
 
 export interface UserProfile {
-    walletAddress: string;
+    walletAddress?: string; // Optional - can be added later
+    email?: string;
+    emailVerified: boolean;
+    firstName?: string;
+    lastName?: string;
+    username?: string;
     displayName: string;
     avatar: string;
     bio: string;
     createdAt: string;
     lastLoginAt: string;
     preferences: UserPreferences;
+    authMethod: 'wallet' | 'email' | 'both'; // How user authenticated
 }
 
 export interface UserPreferences {
@@ -98,6 +105,16 @@ export interface UserState {
     // Actions
     setHasHydrated: (state: boolean) => void;
     login: (walletAddress: string) => Promise<void>;
+    loginWithEmail: (credentials: {
+        email: string;
+        password: string;
+        firstName?: string;
+        lastName?: string;
+        username?: string;
+    }) => Promise<void>;
+    verifyEmail: (token: string) => Promise<boolean>;
+    sendVerificationEmail: () => Promise<void>;
+    linkWallet: (walletAddress: string) => Promise<void>;
     logout: () => void;
     updateProfile: (updates: Partial<UserProfile>) => void;
     updatePreferences: (preferences: Partial<UserPreferences>) => void;
@@ -119,6 +136,10 @@ export interface UserState {
     getTotalDonatedToCampaign: (campaignId: string) => number;
     getActiveCampaigns: () => Campaign[];
     getCompletedCampaigns: () => Campaign[];
+    
+    // Username Management
+    checkUsernameAvailability: (username: string) => boolean;
+    findUserByUsername: (username: string) => { email?: string; walletAddress?: string; displayName: string } | null;
 }
 
 // ============================================================================
@@ -207,6 +228,7 @@ export const useUserStore = create<UserState>()(
                             profile: {
                                 ...existingProfile,
                                 lastLoginAt: new Date().toISOString(),
+                                authMethod: existingProfile.email ? 'both' : 'wallet',
                             },
                         });
                     } else {
@@ -219,6 +241,8 @@ export const useUserStore = create<UserState>()(
                             createdAt: new Date().toISOString(),
                             lastLoginAt: new Date().toISOString(),
                             preferences: defaultPreferences,
+                            emailVerified: false,
+                            authMethod: 'wallet',
                         };
                         
                         set({
@@ -236,6 +260,214 @@ export const useUserStore = create<UserState>()(
                     set({ isLoading: false });
                     throw error;
                 }
+            },
+
+            // Login with email
+            loginWithEmail: async (credentials) => {
+                set({ isLoading: true });
+                
+                try {
+                    const { email, password, firstName, lastName, username } = credentials;
+                    
+                    // Check if this is signup (has firstName) or login
+                    const isSignup = !!firstName;
+                    
+                    if (isSignup) {
+                        // Signup - create new user
+                        // Check if email already exists in localStorage
+                        const existingUsers = JSON.parse(localStorage.getItem('donatedao-users') || '[]');
+                        const userExists = existingUsers.find((u: any) => u.email === email);
+                        
+                        if (userExists) {
+                            throw new Error('Email already registered. Please login instead.');
+                        }
+                        
+                        // Hash password
+                        const passwordHash = await hashPassword(password);
+                        
+                        // Create user profile
+                        const displayName = firstName && lastName 
+                            ? `${firstName} ${lastName}` 
+                            : username || email.split('@')[0];
+                        
+                        const newProfile: UserProfile = {
+                            email,
+                            firstName,
+                            lastName,
+                            username,
+                            displayName,
+                            avatar: generateAvatar(email),
+                            bio: '',
+                            createdAt: new Date().toISOString(),
+                            lastLoginAt: new Date().toISOString(),
+                            preferences: {
+                                ...defaultPreferences,
+                                email: email,
+                            },
+                            emailVerified: false,
+                            authMethod: 'email',
+                        };
+                        
+                        // Save user to localStorage (for demo - in production use backend)
+                        const newUser = {
+                            email,
+                            passwordHash,
+                            profile: newProfile,
+                        };
+                        existingUsers.push(newUser);
+                        localStorage.setItem('donatedao-users', JSON.stringify(existingUsers));
+                        
+                        set({
+                            isAuthenticated: true,
+                            isLoading: false,
+                            profile: newProfile,
+                            transactions: [],
+                            stats: defaultStats,
+                            campaigns: [],
+                            supportedCampaigns: [],
+                            donationRecords: [],
+                        });
+                    } else {
+                        // Login - verify credentials
+                        const existingUsers = JSON.parse(localStorage.getItem('donatedao-users') || '[]');
+                        const user = existingUsers.find((u: any) => u.email === email);
+                        
+                        if (!user) {
+                            throw new Error('Invalid email or password');
+                        }
+                        
+                        const isValid = await verifyPassword(password, user.passwordHash);
+                        if (!isValid) {
+                            throw new Error('Invalid email or password');
+                        }
+                        
+                        // Update last login
+                        user.profile.lastLoginAt = new Date().toISOString();
+                        const updatedUsers = existingUsers.map((u: any) => 
+                            u.email === email ? user : u
+                        );
+                        localStorage.setItem('donatedao-users', JSON.stringify(updatedUsers));
+                        
+                        set({
+                            isAuthenticated: true,
+                            isLoading: false,
+                            profile: user.profile,
+                        });
+                    }
+                } catch (error: any) {
+                    set({ isLoading: false });
+                    throw error;
+                }
+            },
+
+            // Link wallet to email account
+            linkWallet: async (walletAddress: string) => {
+                const profile = get().profile;
+                if (!profile) {
+                    throw new Error('Not authenticated');
+                }
+                
+                if (profile.walletAddress) {
+                    throw new Error('Wallet already linked');
+                }
+                
+                // Update profile with wallet
+                const updatedProfile: UserProfile = {
+                    ...profile,
+                    walletAddress,
+                    authMethod: 'both',
+                };
+                
+                // Update in localStorage if email user
+                if (profile.email) {
+                    const existingUsers = JSON.parse(localStorage.getItem('donatedao-users') || '[]');
+                    const userIndex = existingUsers.findIndex((u: any) => u.email === profile.email);
+                    if (userIndex !== -1) {
+                        existingUsers[userIndex].profile = updatedProfile;
+                        localStorage.setItem('donatedao-users', JSON.stringify(existingUsers));
+                    }
+                }
+                
+                set({ profile: updatedProfile });
+            },
+
+            // Send verification email
+            sendVerificationEmail: async () => {
+                const profile = get().profile;
+                if (!profile || !profile.email) {
+                    throw new Error('No email address found');
+                }
+                
+                if (profile.emailVerified) {
+                    throw new Error('Email already verified');
+                }
+                
+                // Generate verification token
+                const token = crypto.randomUUID();
+                const verificationData = {
+                    email: profile.email,
+                    token,
+                    expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours
+                };
+                
+                // Store verification token
+                localStorage.setItem(`email-verification-${profile.email}`, JSON.stringify(verificationData));
+                
+                // In production, send email via API
+                // For now, we'll simulate it and show token in console
+                console.log('Verification email sent! Token:', token);
+                console.log('In production, this would send an email with verification link');
+                
+                // For demo: show alert with verification link
+                const verificationLink = typeof window !== 'undefined' 
+                    ? `${window.location.origin}/auth/verify-email?token=${token}&email=${encodeURIComponent(profile.email)}`
+                    : `/auth/verify-email?token=${token}&email=${encodeURIComponent(profile.email)}`;
+                alert(`Verification link (demo): ${verificationLink}\n\nIn production, this would be sent via email.`);
+            },
+
+            // Verify email with token
+            verifyEmail: async (token: string) => {
+                const profile = get().profile;
+                if (!profile || !profile.email) {
+                    throw new Error('No email address found');
+                }
+                
+                const storedData = localStorage.getItem(`email-verification-${profile.email}`);
+                if (!storedData) {
+                    throw new Error('Invalid or expired verification token');
+                }
+                
+                const verificationData = JSON.parse(storedData);
+                if (verificationData.token !== token) {
+                    throw new Error('Invalid verification token');
+                }
+                
+                if (new Date(verificationData.expiresAt) < new Date()) {
+                    localStorage.removeItem(`email-verification-${profile.email}`);
+                    throw new Error('Verification token has expired');
+                }
+                
+                // Mark email as verified
+                const updatedProfile: UserProfile = {
+                    ...profile,
+                    emailVerified: true,
+                };
+                
+                // Update in localStorage
+                if (profile.email) {
+                    const existingUsers = JSON.parse(localStorage.getItem('donatedao-users') || '[]');
+                    const userIndex = existingUsers.findIndex((u: any) => u.email === profile.email);
+                    if (userIndex !== -1) {
+                        existingUsers[userIndex].profile = updatedProfile;
+                        localStorage.setItem('donatedao-users', JSON.stringify(existingUsers));
+                    }
+                }
+                
+                // Remove verification token
+                localStorage.removeItem(`email-verification-${profile.email}`);
+                
+                set({ profile: updatedProfile });
+                return true;
             },
 
             // Logout
@@ -443,10 +675,70 @@ export const useUserStore = create<UserState>()(
                 const { campaigns } = get();
                 return campaigns.filter((c) => c.status === 'completed');
             },
+
+            // Username Management
+            checkUsernameAvailability: (username: string) => {
+                if (!username || username.length < 3) return false;
+                
+                // Check current user's username
+                const currentProfile = get().profile;
+                if (currentProfile?.username?.toLowerCase() === username.toLowerCase()) {
+                    return true; // Same user, available
+                }
+                
+                // Check all users in localStorage
+                const existingUsers = JSON.parse(localStorage.getItem('donatedao-users') || '[]');
+                const usernameExists = existingUsers.some((u: any) => 
+                    u.profile?.username?.toLowerCase() === username.toLowerCase()
+                );
+                
+                return !usernameExists;
+            },
+
+            findUserByUsername: (username: string) => {
+                if (!username) return null;
+                
+                // Check current user
+                const currentProfile = get().profile;
+                if (currentProfile?.username?.toLowerCase() === username.toLowerCase()) {
+                    return {
+                        email: currentProfile.email,
+                        walletAddress: currentProfile.walletAddress,
+                        displayName: currentProfile.displayName,
+                    };
+                }
+                
+                // Check all users in localStorage
+                const existingUsers = JSON.parse(localStorage.getItem('donatedao-users') || '[]');
+                const user = existingUsers.find((u: any) => 
+                    u.profile?.username?.toLowerCase() === username.toLowerCase()
+                );
+                
+                if (user?.profile) {
+                    return {
+                        email: user.profile.email,
+                        walletAddress: user.profile.walletAddress,
+                        displayName: user.profile.displayName,
+                    };
+                }
+                
+                return null;
+            },
         }),
         {
             name: 'donatedao-user-storage',
-            storage: createJSONStorage(() => localStorage),
+            storage: createJSONStorage(() => {
+                // Only use localStorage on client side
+                if (typeof window !== 'undefined') {
+                    return localStorage;
+                }
+                // Return a no-op storage for SSR
+                return {
+                    getItem: () => null,
+                    setItem: () => {},
+                    removeItem: () => {},
+                };
+            }),
             partialize: (state) => ({
                 isAuthenticated: state.isAuthenticated,
                 profile: state.profile,
@@ -456,13 +748,30 @@ export const useUserStore = create<UserState>()(
                 supportedCampaigns: state.supportedCampaigns,
                 donationRecords: state.donationRecords,
             }),
-            onRehydrateStorage: () => (state) => {
+            onRehydrateStorage: () => (state, error) => {
                 // Mark store as hydrated when localStorage is loaded
-                state?.setHasHydrated(true);
+                if (error) {
+                    console.error('Error hydrating user store:', error);
+                }
+                // Always set hydrated to true, even on error
+                if (state) {
+                    state.setHasHydrated(true);
+                }
             },
         }
     )
 );
+
+// Set hydrated immediately for SSR/non-persisted scenarios
+if (typeof window !== 'undefined') {
+    // If localStorage is not available or empty, set hydrated after a short delay
+    setTimeout(() => {
+        const state = useUserStore.getState();
+        if (!state._hasHydrated) {
+            state.setHasHydrated(true);
+        }
+    }, 100);
+}
 
 // ============================================================================
 // HELPER FUNCTIONS

@@ -63,6 +63,16 @@ NEXT_PUBLIC_ADMIN_ADDRESSES=addr_test1...,addr_test1...,addr_test1...,addr_test1
 NEXT_PUBLIC_MULTISIG_THRESHOLD=3
 
 # ============================================================================
+# TELEGRAM BOT CONFIGURATION (Optional)
+# ============================================================================
+# For chatbot agent handoff functionality
+# Bot token is already configured in code, but you can override it here
+# Get agent chat ID by visiting /api/telegram/get-chat-id after agent messages bot
+
+TELEGRAM_BOT_TOKEN=8405397592:AAF6SdgC5MvVBwlKUuOBO-xEcQG0aDGxlQk
+TELEGRAM_AGENT_CHAT_ID=  # Get this from /api/telegram/get-chat-id
+
+# ============================================================================
 # DEBUG MODE
 # ============================================================================
 NEXT_PUBLIC_DEBUG=false
@@ -106,4 +116,27 @@ For testing on PreProd:
 2. Switch to PreProd testnet in wallet settings
 3. Visit the Cardano Testnet Faucet: https://docs.cardano.org/cardano-testnet/tools/faucet/
 4. Request test ADA (usually 1000 tADA)
+
+## Telegram Bot Setup (Optional)
+
+For chatbot agent handoff functionality:
+
+1. **Get Agent Chat ID:**
+   - Start a conversation with the bot on Telegram
+   - Send any message to the bot
+   - Visit: `http://localhost:3000/api/telegram/get-chat-id`
+   - Find your chat ID from the list
+
+2. **Set Environment Variable:**
+   ```bash
+   TELEGRAM_AGENT_CHAT_ID=your_chat_id_here
+   ```
+
+3. **Test Connection:**
+   - Open the chatbot in the app
+   - Ask a question the bot can't answer
+   - Click "Connect to Agent Sumanth"
+   - Check Telegram for the message
+
+See `TELEGRAM_SETUP.md` for detailed instructions.
 

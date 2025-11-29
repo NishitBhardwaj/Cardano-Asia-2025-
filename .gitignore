@@ -60,6 +60,9 @@ plutus.json
 *.temp
 .cache/
 
+# Large image files (use Git LFS if needed)
+# Note: public/background.jpg is included (already optimized)
+
 # Git LFS
 # If using Git LFS for large files
 *.psd
