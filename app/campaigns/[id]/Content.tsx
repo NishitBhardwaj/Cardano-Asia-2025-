@@ -152,7 +152,7 @@ function CampaignDetailInner() {
                 <div className="container mx-auto px-6 py-12 text-center">
                     <div className="text-6xl mb-4">🔍</div>
                     <h1 className="text-3xl font-bold mb-4">Campaign Not Found</h1>
-                    <p className="text-foreground/60 mb-6">The campaign you're looking for doesn't exist or has been removed.</p>
+                    <p className="text-foreground/60 mb-6">The campaign you&apos;re looking for doesn&apos;t exist or has been removed.</p>
                     <Link href="/campaigns" className="gradient-primary px-6 py-3 rounded-lg text-white font-medium">
                         Browse Campaigns
                     </Link>

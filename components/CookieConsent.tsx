@@ -49,7 +49,7 @@ export default function CookieConsent() {
                             </div>
                             <p className="text-xs sm:text-sm text-foreground/70">
                                 We use cookies to improve your experience, analyze traffic, and personalize content. 
-                                By clicking "Accept", you consent to our use of cookies.
+                                By clicking &quot;Accept&quot;, you consent to our use of cookies.
                             </p>
                         </div>
                         <div className="flex gap-2 w-full sm:w-auto">

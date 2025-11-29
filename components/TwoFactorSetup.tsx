@@ -143,7 +143,7 @@ export default function TwoFactorSetup({ email, onComplete }: TwoFactorSetupProp
                         onClick={() => setStep('verify')}
                         className="w-full px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors"
                     >
-                        I've scanned the QR code
+                        I&apos;ve scanned the QR code
                     </button>
                 </div>
             )}
@@ -206,7 +206,7 @@ export default function TwoFactorSetup({ email, onComplete }: TwoFactorSetupProp
                     )}
 
                     <p className="text-foreground/70">
-                        Two-factor authentication is enabled. You'll need to enter a code from your authenticator app when logging in.
+                        Two-factor authentication is enabled. You&apos;ll need to enter a code from your authenticator app when logging in.
                     </p>
 
                     <button

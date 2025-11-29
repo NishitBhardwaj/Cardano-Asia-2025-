@@ -124,7 +124,7 @@ function DashboardPageInner() {
                         </div>
                     ) : (
                         <div className="text-center py-8">
-                            <p className="text-foreground/60 mb-4">You haven't created any campaigns yet</p>
+                            <p className="text-foreground/60 mb-4">You haven&apos;t created any campaigns yet</p>
                             <Link href="/create" className="gradient-primary px-6 py-2 rounded-lg text-white font-medium">
                                 Create your first campaign
                             </Link>

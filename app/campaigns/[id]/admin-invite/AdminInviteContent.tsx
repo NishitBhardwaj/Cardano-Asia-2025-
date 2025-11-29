@@ -87,14 +87,14 @@ function AdminInviteContentInner() {
                         <div className="text-center space-y-4">
                             <div className="text-6xl mb-4">✓</div>
                             <h1 className="text-3xl font-bold text-green-500">Invitation Accepted!</h1>
-                            <p className="text-foreground/60">You are now an admin of "{campaign.title}"</p>
+                            <p className="text-foreground/60">You are now an admin of &quot;{campaign.title}&quot;</p>
                             <p className="text-sm text-foreground/50">Redirecting to campaign page...</p>
                         </div>
                     ) : (
                         <>
                             <div className="text-center space-y-2">
                                 <h1 className="text-3xl font-bold">Admin Invitation</h1>
-                                <p className="text-foreground/60">You've been invited to become an admin</p>
+                                <p className="text-foreground/60">You&apos;ve been invited to become an admin</p>
                             </div>
 
                             <div className="space-y-4">
@@ -127,7 +127,7 @@ function AdminInviteContentInner() {
                                 ) : (
                                     <div className="space-y-2">
                                         <p className="text-foreground/60">
-                                            As an admin, you'll be able to help manage this campaign.
+                                            As an admin, you&apos;ll be able to help manage this campaign.
                                         </p>
                                         <button
                                             onClick={handleAcceptInvite}

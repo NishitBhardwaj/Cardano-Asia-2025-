@@ -2479,22 +2479,53 @@ User clicks "Donate" (Hydra-enabled campaign)
 
 ## 🌐 Deployment Guide
 
-### Deploy to Vercel
+### Deploy to Vercel (Recommended)
+
+#### Option 1: One-Click Deploy
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/NishitBhardwaj/Cardano-Asia-2025-)
+
+#### Option 2: CLI Deployment
 
 ```bash
 # 1. Install Vercel CLI
 npm i -g vercel
 
-# 2. Login
+# 2. Login to Vercel
 vercel login
 
-# 3. Deploy
-vercel --prod
+# 3. Deploy (first time - will prompt for settings)
+vercel
 
-# 4. Set environment variables in Vercel dashboard
-# - NEXT_PUBLIC_BLOCKFROST_API_KEY
-# - NEXT_PUBLIC_NETWORK
-# - NEXT_PUBLIC_*_SCRIPT_ADDRESS (after contract deployment)
+# 4. Deploy to production
+vercel --prod
+```
+
+#### Option 3: GitHub Integration (Recommended for Teams)
+
+1. Go to [vercel.com](https://vercel.com) and sign in
+2. Click "Add New Project"
+3. Import your GitHub repository
+4. Configure environment variables (see below)
+5. Click "Deploy"
+
+#### Environment Variables for Vercel
+
+Set these in your Vercel project settings → Environment Variables:
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `NEXT_PUBLIC_NETWORK` | ✅ | `preprod` or `mainnet` |
+| `NEXT_PUBLIC_BLOCKFROST_API_KEY` | ✅ | Your Blockfrost API key |
+| `BREVO_API_KEY` | ✅ | For email OTP (Brevo/Sendinblue) |
+| `NEXT_PUBLIC_IPFS_GATEWAY` | ❌ | IPFS gateway URL |
+
+#### Build Settings (Auto-detected)
+
+```
+Framework Preset: Next.js
+Build Command: npm run build
+Output Directory: .next
+Install Command: npm install
 ```
 
 ### Deploy to Netlify
@@ -2506,10 +2537,30 @@ npm i -g netlify-cli
 # 2. Login
 netlify login
 
-# 3. Deploy
-netlify deploy --prod
+# 3. Build and Deploy
+npm run build
+netlify deploy --prod --dir=.next
 
 # 4. Set environment variables in Netlify dashboard
+```
+
+### Deploy to Self-Hosted (Docker)
+
+```dockerfile
+FROM node:18-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
+COPY . .
+RUN npm run build
+EXPOSE 3000
+CMD ["npm", "start"]
+```
+
+```bash
+# Build and run
+docker build -t donatedao .
+docker run -p 3000:3000 --env-file .env.local donatedao
 ```
 
 ### Deploy Smart Contracts to Testnet
@@ -2532,14 +2583,31 @@ aiken build
 
 ### Production Checklist
 
-- [ ] Smart contracts audited
+#### Before Deployment
+- [ ] All environment variables set in Vercel/Netlify
+- [ ] Brevo API key configured for email OTP
+- [ ] Blockfrost API key set for correct network
+- [ ] Build succeeds locally (`npm run build`)
+- [ ] No TypeScript/ESLint errors (`npm run lint`)
+
+#### Security
+- [ ] Smart contracts audited (if using real funds)
 - [ ] All features tested on testnet
-- [ ] Environment variables set
-- [ ] Error tracking enabled (Sentry)
-- [ ] Analytics configured
-- [ ] Rate limiting implemented
-- [ ] Backup recovery plan ready
-- [ ] Legal compliance verified
+- [ ] Rate limiting implemented for APIs
+- [ ] CORS configured properly
+- [ ] No sensitive data in client code
+
+#### Performance
+- [ ] Images optimized
+- [ ] ML model loads correctly (or falls back to mock)
+- [ ] Lighthouse score > 80
+
+#### Post-Deployment
+- [ ] Test wallet connection on live site
+- [ ] Test email OTP flow
+- [ ] Verify all routes work (200 status)
+- [ ] Check mobile responsiveness
+- [ ] Monitor for errors in Vercel dashboard
 
 ---
 

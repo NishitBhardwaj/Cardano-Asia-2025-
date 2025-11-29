@@ -157,7 +157,7 @@ export default function HomePage() {
                         Built for <span className="text-gradient">Trust & Transparency</span>
                     </h2>
                     <p className="text-foreground/60 max-w-2xl mx-auto">
-                        Leveraging the power of Cardano blockchain to create a donation ecosystem that's secure, transparent, and community-governed.
+                        Leveraging the power of Cardano blockchain to create a donation ecosystem that&apos;s secure, transparent, and community-governed.
                     </p>
                 </div>
 
@@ -269,7 +269,7 @@ export default function HomePage() {
                     ].map((item, i) => (
                         <div key={i} className="glass p-8 rounded-2xl animate-slide-up relative" style={{ animationDelay: `${i * 150}ms` }}>
                             {/* Quote icon */}
-                            <div className="absolute -top-4 left-6 text-5xl text-primary/20">"</div>
+                            <div className="absolute -top-4 left-6 text-5xl text-primary/20">&quot;</div>
                             
                             <p className="text-foreground/80 mb-6 relative z-10 italic">{item.quote}</p>
                             <div className="flex items-center gap-3">
