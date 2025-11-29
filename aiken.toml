@@ -1,0 +1,9 @@
+name = "cardano_donation_dapp"
+version = "1.0.0"
+plutus = "v2"
+compiler = "1.1.19"
+license = "Apache-2.0"
+description = "Community Donation Wallet DApp"
+
+[dependencies]
+stdlib = { version = "2.1.0", source = "github", owner = "aiken-lang", repo = "stdlib" }

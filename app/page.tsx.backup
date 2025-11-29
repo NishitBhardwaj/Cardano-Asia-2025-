@@ -1,0 +1,179 @@
+                            </div >
+    <h1 className="text-2xl font-bold">DonateDAO</h1>
+                        </div >
+
+    <div className="flex items-center gap-8">
+        <Link href="/campaigns" className="hover:text-primary transition-colors">
+            Campaigns
+        </Link>
+        <Link href="/governance" className="hover:text-primary transition-colors">
+            Governance
+        </Link>
+        <WalletConnect />
+    </div>
+                    </nav >
+                </header >
+
+    {/* Hero Section */ }
+    < section className = "container mx-auto px-6 py-24" >
+        <div className="max-w-4xl mx-auto text-center space-y-8 animate-fade-in">
+            <h1 className="text-7xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent pb-4">
+                Community-Powered
+                <br />
+                Transparent Giving
+            </h1>
+
+            <p className="text-xl text-foreground/80 max-w-2xl mx-auto">
+                The first decentralized donation platform on Cardano featuring multi-signature security,
+                on-chain governance, and complete transparency.
+            </p>
+
+            <div className="flex gap-4 justify-center pt-4">
+                <Link
+                    href="/create"
+                    className="gradient-primary px-8 py-4 rounded-lg font-semibold text-white hover:opacity-90 transition-opacity shadow-lg shadow-primary/20"
+                >
+                    Create Campaign
+                </Link>
+                <Link
+                    href="/campaigns"
+                    className="glass px-8 py-4 rounded-lg font-semibold hover:bg-white/10 transition-colors"
+                >
+                    Explore Campaigns
+                </Link>
+            </div>
+        </div>
+                </section >
+
+    {/* Stats Section */ }
+    < section className = "container mx-auto px-6 py-16" >
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+                { label: 'Total Raised', value: '125,000 ₳', change: '+12% this month' },
+                { label: 'Active Campaigns', value: '24', change: '8 ending soon' },
+                { label: 'Community Members', value: '1,234', change: '+156 this week' }
+            ].map((stat, i) => (
+                <div key={i} className="glass p-8 rounded-xl hover:bg-white/10 transition-colors animate-slide-up" style={{ animationDelay: `${i * 100}ms` }}>
+                    <p className="text-foreground/60 text-sm">{stat.label}</p>
+                    <p className="text-4xl font-bold pt-2 gradient-accent bg-clip-text text-transparent">{stat.value}</p>
+                    <p className="text-sm text-accent pt-2">{stat.change}</p>
+                </div>
+            ))}
+        </div>
+                </section >
+
+    {/* Features Section */ }
+    < section className = "container mx-auto px-6 py-24" >
+                    <h2 className="text-4xl font-bold text-center mb-16">Built for Trust & Transparency</h2>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {[
+                            {
+                                icon: '🔐',
+                                title: 'Multi-Sig Security',
+                                description: '3-of-5 admin approval required for all fund withdrawals. Your donations are protected.'
+                            },
+                            {
+                                icon: '🗳️',
+                                title: 'On-Chain Governance',
+                                description: 'Vote on proposals with voting power based on your donations. True democratic funding.'
+                            },
+                            {
+                                icon: '👁️',
+                                title: 'Full Transparency',
+                                description: 'Every transaction recorded on Cardano blockchain. See exactly where funds go.'
+                            },
+                            {
+                                icon: '⚡',
+                                title: 'Low Fees',
+                                description: 'Powered by Cardano. Minimal transaction costs mean more goes to causes.'
+                            },
+                            {
+                                icon: '🎯',
+                                title: 'Milestone Tracking',
+                                description: 'Campaign goals and progress visible in real-time. Track impact as it happens.'
+                            },
+                            {
+                                icon: '🌍',
+                                title: 'Global Access',
+                                description: 'Accept donations from anywhere. Support causes without borders.'
+                            }
+                        ].map((feature, i) => (
+                            <div key={i} className="glass p-8 rounded-xl hover:scale-105 transition-transform">
+                                <div className="text-5xl mb-4">{feature.icon}</div>
+                                <h3 className="text-xl font-semibold mb-3">{feature.title}</h3>
+                                <p className="text-foreground/70">{feature.description}</p>
+                            </div>
+                        ))}
+                    </div>
+                </section >
+
+    {/* CTA Section */ }
+    < section className = "container mx-auto px-6 py-24" >
+        <div className="glass rounded-2xl p-12 text-center gradient-primary/10">
+            <h2 className="text-4xl font-bold mb-6">Ready to Make a Difference?</h2>
+            <p className="text-xl text-foreground/80 mb-8 max-w-2xl mx-auto">
+                Launch your campaign or support existing ones. Every contribution is tracked on-chain for complete accountability.
+            </p>
+            <Link
+                href="/create"
+                className="gradient-primary px-10 py-5 rounded-lg font-semibold text-white hover:opacity-90 transition-opacity inline-block shadow-xl shadow-primary/30"
+            >
+                Get Started Now
+            </Link>
+        </div>
+                </section >
+
+    {/* Footer */ }
+    < footer className = "border-t border-border mt-24" >
+        <div className="container mx-auto px-6 py-12">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <div className="flex items-center gap-2 mb-4">
+                        <div className="w-8 h-8 gradient-primary rounded-lg flex items-center justify-center">
+                            <span className="text-white font-bold">₳</span>
+                        </div>
+                        <span className="font-bold text-lg">DonateDAO</span>
+                    </div>
+                    <p className="text-foreground/60 text-sm">
+                        Transparent community donations on Cardano
+                    </p>
+                </div>
+
+                <div>
+                    <h4 className="font-semibold mb-4">Platform</h4>
+                    <ul className="space-y-2 text-sm text-foreground/70">
+                        <li><Link href="/campaigns" className="hover:text-primary transition-colors">Campaigns</Link></li>
+                        <li><Link href="/create" className="hover:text-primary transition-colors">Create</Link></li>
+                        <li><Link href="/governance" className="hover:text-primary transition-colors">Governance</Link></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 className="font-semibold mb-4">Resources</h4>
+                    <ul className="space-y-2 text-sm text-foreground/70">
+                        <li><a href="#" className="hover:text-primary transition-colors">Documentation</a></li>
+                        <li><a href="#" className="hover:text-primary transition-colors">GitHub</a></li>
+                        <li><a href="#" className="hover:text-primary transition-colors">Support</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 className="font-semibold mb-4">Community</h4>
+                    <ul className="space-y-2 text-sm text-foreground/70">
+                        <li><a href="#" className="hover:text-primary transition-colors">Discord</a></li>
+                        <li><a href="#" className="hover:text-primary transition-colors">Twitter</a></li>
+                        <li><a href="#" className="hover:text-primary transition-colors">Telegram</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div className="border-t border-border mt-12 pt-8 text-center text-sm text-foreground/60">
+                <p>Built on Cardano with Aiken & Next.js • Cardano Hackathon 2025</p>
+            </div>
+        </div>
+                </footer >
+            </div >
+        </MeshProvider >
+    );
+}
