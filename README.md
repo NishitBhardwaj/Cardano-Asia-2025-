@@ -232,7 +232,18 @@ DonateDAO addresses all these issues:
 | **Campaign Images** | Upload custom images (base64, max 500KB, auto-compressed) |
 | **Image Compression** | Automatic resize to 800px max dimension |
 
-### 9. AI-Powered Features & Chatbot
+### 9. AI-Powered Features & ML Model
+| Feature | Description |
+|---------|-------------|
+| **CNN Model for ID Verification** | Trained convolutional neural network for document verification |
+| **TensorFlow.js Integration** | Browser-based ML inference with TensorFlow.js |
+| **IndCard Dataset** | Trained on 100+ ID card images (original + augmented) |
+| **Model Training Pipeline** | Python scripts for training and testing (`ml-model/`) |
+| **Real-time Verification** | ~50-100ms inference time in browser |
+| **Fallback Mode** | Automatic fallback to mock verification if model unavailable |
+| **Document Verification AI** | Centralized AI service abstraction (`lib/ai/id-verification-service.ts`) |
+
+### 10. Smart Chatbot & Support
 | Feature | Description |
 |---------|-------------|
 | **Smart Chatbot** | Production-ready knowledge-based chatbot with step-by-step guidance |
@@ -241,15 +252,9 @@ DonateDAO addresses all these issues:
 | **User Data Collection** | Collects email/username for personalized support |
 | **Step-by-Step Guidance** | Detailed instructions for: account creation, verification, campaign creation, donations, 2FA setup |
 | **Agent Handoff** | Connects to human support (Telegram) when needed |
-| **Identity Verification Guidance** | Explains verification process, status checks, next steps |
-| **QR Code Explanations** | Explains how QR codes work and how to use them |
-| **2FA Setup Help** | Guides users through 2FA setup process |
-| **Password Reset Help** | Explains password reset via email OTP |
-| **Document Verification AI** | Centralized AI service abstraction for identity verification |
-| **AI Service Interface** | Clean API boundary for ML model integration (`lib/ai/id-verification-service.ts`) |
-| **Model Training Placeholder** | Ready for TensorFlow.js, ONNX.js, or backend API integration |
+| **Messenger-Style Button** | WhatsApp-like floating chat button |
 
-### 10. Wallet Integration
+### 11. Wallet Integration
 | Feature | Description |
 |---------|-------------|
 | **Multi-wallet Support** | Nami, Eternl, Flint, Typhon, Yoroi, Gero |
@@ -258,8 +263,10 @@ DonateDAO addresses all these issues:
 | **Balance Display** | Real-time wallet balance |
 | **Wallet Linking** | Add wallet to email-authenticated accounts |
 | **Wallet-only Donations** | Donate without full account (just wallet connection) |
+| **Wallet Signup Flow** | Complete profile (name, email, password) after wallet connection |
+| **Email Verification in Modal** | OTP verification during wallet signup |
 
-### 11. Visual Design & Responsive UI
+### 12. Visual Design & Responsive UI
 | Feature | Description |
 |---------|-------------|
 | **Light/Dark Mode** | Toggle between light and dark themes (sun/moon icons) |
@@ -273,7 +280,7 @@ DonateDAO addresses all these issues:
 | **Adaptive Layout** | Components adjust spacing and padding for all screens |
 | **Touch-Friendly** | Large tap targets for mobile users |
 
-### 12. Performance & Privacy
+### 13. Performance & Privacy
 | Feature | Description |
 |---------|-------------|
 | **Lazy Loading** | Dynamic imports for non-critical components |
@@ -285,7 +292,7 @@ DonateDAO addresses all these issues:
 | **Privacy Controls** | Accept/Decline cookies with preferences stored locally |
 | **Production Optimizations** | Console removal in production builds |
 
-### 13. AI Chatbot & Support
+### 14. AI Chatbot & Support
 | Feature | Description |
 |---------|-------------|
 | **Intelligent Chatbot** | AI-powered assistant with 15+ Q&A knowledge base |
@@ -308,10 +315,13 @@ DonateDAO addresses all these issues:
 | **TypeScript** | 5.x | Type-safe JavaScript |
 | **Tailwind CSS** | 3.4.0 | Utility-first CSS framework |
 | **Zustand** | 4.5.0 | Lightweight state management |
+| **TensorFlow.js** | 4.x | Browser-based ML inference |
 | **Recharts** | 2.12.0 | Data visualization charts |
 | **Framer Motion** | 11.0.0 | Animation library |
 | **Zod** | 3.23.0 | Schema validation |
 | **date-fns** | 3.6.0 | Date manipulation |
+| **qrcode.react** | 3.x | QR code generation |
+| **otplib** | 12.x | TOTP authentication |
 
 ### Blockchain Technologies
 
@@ -341,6 +351,81 @@ DonateDAO addresses all these issues:
 | **Blockfrost** | Blockchain API service |
 | **Vercel/Netlify** | Frontend hosting |
 | **GitHub** | Version control |
+
+### ML/AI Technologies
+
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| **TensorFlow** | 2.13+ | Model training (Python) |
+| **TensorFlow.js** | 4.x | Browser inference |
+| **Pillow** | 10.x | Image processing |
+| **scikit-learn** | 1.3+ | Data splitting |
+
+---
+
+## 🤖 ML Model Training
+
+### ID Card Verification Model
+
+The DApp includes a trained CNN model for verifying identity documents.
+
+#### Dataset
+- **Source**: IndCard dataset (MASK-RCNN-Dataset)
+- **Training Data**: 21 original + 84 augmented ID card images
+- **Synthetic Invalid Data**: Noise, distortions, color patches
+
+#### Model Architecture
+```
+Input (224x224x3)
+    ↓
+Conv2D(32) → BatchNorm → MaxPool → Dropout(0.25)
+    ↓
+Conv2D(64) → BatchNorm → MaxPool → Dropout(0.25)
+    ↓
+Conv2D(128) → BatchNorm → MaxPool → Dropout(0.25)
+    ↓
+Conv2D(256) → BatchNorm → MaxPool → Dropout(0.25)
+    ↓
+Flatten → Dense(256) → Dense(128) → Dense(1, sigmoid)
+```
+
+#### Training the Model
+
+```bash
+# 1. Install Python dependencies
+cd ml-model
+pip install -r requirements.txt
+
+# 2. Train the model
+python train_id_verification_model.py
+
+# 3. Test the model
+python test_model.py
+```
+
+#### Output Files
+```
+ml-model/
+├── saved_model/
+│   ├── id_verification_model/    # TensorFlow SavedModel
+│   ├── id_verification_model.h5  # Keras H5 format
+│   └── model_metadata.json       # Model info
+public/
+└── ml-model/
+    └── model.json                # TensorFlow.js model
+```
+
+#### Integration
+The model is automatically loaded by the verification service:
+```typescript
+// lib/ai/id-verification-service.ts
+// Tries to load TensorFlow.js model, falls back to mock if unavailable
+const result = await verificationService.verifyIdDocument({
+    image: base64Image,
+    documentType: 'passport',
+    userId: 'user123'
+});
+```
 
 ---
 

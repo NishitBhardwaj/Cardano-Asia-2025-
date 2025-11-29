@@ -646,16 +646,29 @@ interface CaptchaProps {
 ```
 
 ### WalletInfoModal.tsx
-**Purpose**: Modal for wallet users to add email/password
+**Purpose**: Complete signup modal for wallet users to add profile info with email verification
 
 **Features**:
-- First name, last name fields
-- Email field
-- Password field
-- Form validation
-- Optional (can be skipped)
-- Updates user profile
+- First name, last name fields (required)
+- Email field with inline verification button
+- OTP-based email verification (6-digit code)
+- Password field (min 8 characters)
+- Form validation with error messages
+- "Verify" button sends OTP to email
+- OTP input appears after sending
+- Email marked as verified only after OTP confirmation
+- Optional (can skip for now)
+- Updates user profile with verified status
 - Saves password hash to localStorage
+- Responsive design for mobile
+
+**Flow**:
+1. User connects wallet → Modal opens
+2. Enter first name, last name
+3. Enter email → Click "Verify" button
+4. Enter 6-digit OTP code
+5. Enter password
+6. Click "Save Profile" or "Skip for Now"
 
 **Props**:
 ```typescript
@@ -1368,6 +1381,69 @@ animation: {
     "slide-up": "slideUp 0.5s ease-out",
 }
 ```
+
+---
+
+## AI/ML Services
+
+### IdentityVerificationService (`lib/ai/id-verification-service.ts`)
+**Purpose**: AI-powered identity document verification using trained CNN model
+
+**Features**:
+- TensorFlow.js-based browser inference
+- Trained CNN model for ID card verification
+- Automatic model loading from `/ml-model/model.json`
+- Fallback to mock verification if model unavailable
+- Document type support: passport, license, utility_bill
+- Real-time confidence scoring
+
+**Methods**:
+```typescript
+class IdentityVerificationService {
+  // Verify an uploaded document
+  async verifyIdDocument(request: VerificationRequest): Promise<VerificationResponse>;
+  
+  // Check verification status for a user
+  async getVerificationStatus(userId: string): Promise<VerificationStatus>;
+  
+  // Check if model is loaded
+  isModelLoaded(): boolean;
+}
+```
+
+**Usage**:
+```typescript
+import { verificationService } from '@/lib/ai/id-verification-service';
+
+const result = await verificationService.verifyIdDocument({
+  image: base64ImageString,
+  documentType: 'passport',
+  userId: 'user-123'
+});
+
+// result.status: 'valid' | 'fake' | 'uncertain'
+// result.score: 0-1 confidence
+// result.modelUsed: 'tensorflow' | 'mock'
+```
+
+### ML Model Training (`ml-model/`)
+**Purpose**: Python scripts for training the ID verification model
+
+**Files**:
+- `train_id_verification_model.py` - Main training script
+- `test_model.py` - Model testing script
+- `requirements.txt` - Python dependencies
+
+**Training**:
+```bash
+cd ml-model
+pip install -r requirements.txt
+python train_id_verification_model.py
+```
+
+**Model Output**:
+- `ml-model/saved_model/` - TensorFlow SavedModel
+- `public/ml-model/model.json` - TensorFlow.js model for browser
 
 ---
 
