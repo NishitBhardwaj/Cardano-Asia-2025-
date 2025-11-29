@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { MeshProvider } from '@meshsdk/react';
 import useAuth from '@/lib/hooks/useAuth';
+import { useUserStore } from '@/lib/store/userStore';
 
 function AuthPageInner() {
     const router = useRouter();
@@ -19,15 +20,22 @@ function AuthPageInner() {
         connectWallet,
         formatWalletAddress,
     } = useAuth();
+    const { _hasHydrated } = useUserStore();
 
     const [selectedWallet, setSelectedWallet] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [showWelcome, setShowWelcome] = useState(false);
     const [redirectCountdown, setRedirectCountdown] = useState(3);
+    const [justConnected, setJustConnected] = useState(false);
 
-    // Redirect to profile if already authenticated
+    // Redirect to profile if already authenticated (only after just connecting or hydration)
     useEffect(() => {
-        if (isAuthenticated && profile) {
+        // Only redirect if:
+        // 1. User just connected their wallet, OR
+        // 2. Store has hydrated and user is already authenticated
+        const shouldRedirect = isAuthenticated && profile && (justConnected || _hasHydrated);
+        
+        if (shouldRedirect) {
             setShowWelcome(true);
             
             // Start countdown
@@ -43,28 +51,15 @@ function AuthPageInner() {
 
             // Redirect after countdown
             const redirectTimer = setTimeout(() => {
-                try {
-                    router.replace('/profile');
-                } catch (e) {
-                    // Fallback to window.location if router fails
-                    window.location.href = '/profile';
-                }
-            }, 3000);
-
-            // Secondary fallback - if still on auth page after 5 seconds, force redirect
-            const fallbackTimer = setTimeout(() => {
-                if (window.location.pathname === '/auth') {
-                    window.location.href = '/profile';
-                }
-            }, 5000);
+                window.location.href = '/profile';
+            }, 2500);
 
             return () => {
                 clearInterval(countdownInterval);
                 clearTimeout(redirectTimer);
-                clearTimeout(fallbackTimer);
             };
         }
-    }, [isAuthenticated, profile, router]);
+    }, [isAuthenticated, profile, justConnected, _hasHydrated]);
 
     const handleConnect = async (walletName: string) => {
         setSelectedWallet(walletName);
@@ -72,19 +67,16 @@ function AuthPageInner() {
         
         try {
             await connectWallet(walletName);
+            setJustConnected(true); // Mark that we just connected
         } catch (err: any) {
             setError(err.message || 'Failed to connect wallet');
             setSelectedWallet(null);
         }
     };
 
-    // Manual redirect function
+    // Manual redirect function - use window.location for reliability
     const handleManualRedirect = () => {
-        try {
-            router.replace('/profile');
-        } catch (e) {
-            window.location.href = '/profile';
-        }
+        window.location.href = '/profile';
     };
 
     // Show welcome screen after successful login

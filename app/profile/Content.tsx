@@ -11,22 +11,36 @@ import Header from '@/components/Header';
 function ProfilePageInner() {
     const router = useRouter();
     const { isAuthenticated, profile, walletAddress, balance, disconnectWallet } = useAuth();
-    const { stats, transactions, campaigns, supportedCampaigns } = useUserStore();
+    const { stats, transactions, campaigns, supportedCampaigns, _hasHydrated } = useUserStore();
     const [activeTab, setActiveTab] = useState<'overview' | 'transactions' | 'campaigns' | 'settings'>('overview');
 
-    // Redirect if not authenticated
+    // Redirect if not authenticated (only after hydration completes)
     useEffect(() => {
-        if (!isAuthenticated) {
+        // Wait for store to hydrate before checking auth
+        if (_hasHydrated && !isAuthenticated) {
             router.push('/auth');
         }
-    }, [isAuthenticated, router]);
+    }, [isAuthenticated, _hasHydrated, router]);
 
-    if (!isAuthenticated || !profile) {
+    // Show loading while hydrating or authenticating
+    if (!_hasHydrated || (!isAuthenticated && !profile)) {
         return (
             <div className="min-h-screen bg-background flex items-center justify-center">
                 <div className="text-center space-y-4">
                     <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
                     <p className="text-foreground/60">Loading profile...</p>
+                </div>
+            </div>
+        );
+    }
+
+    // If hydrated but not authenticated, show brief loading (redirect will happen)
+    if (!isAuthenticated || !profile) {
+        return (
+            <div className="min-h-screen bg-background flex items-center justify-center">
+                <div className="text-center space-y-4">
+                    <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+                    <p className="text-foreground/60">Redirecting to login...</p>
                 </div>
             </div>
         );

@@ -85,6 +85,7 @@ export interface UserState {
     // Auth State
     isAuthenticated: boolean;
     isLoading: boolean;
+    _hasHydrated: boolean; // Track if store has loaded from localStorage
     
     // User Data
     profile: UserProfile | null;
@@ -95,6 +96,7 @@ export interface UserState {
     donationRecords: DonationRecord[]; // All donation records
     
     // Actions
+    setHasHydrated: (state: boolean) => void;
     login: (walletAddress: string) => Promise<void>;
     logout: () => void;
     updateProfile: (updates: Partial<UserProfile>) => void;
@@ -176,12 +178,18 @@ export const useUserStore = create<UserState>()(
             // Initial State
             isAuthenticated: false,
             isLoading: false,
+            _hasHydrated: false,
             profile: null,
             transactions: [],
             stats: defaultStats,
             campaigns: [],
             supportedCampaigns: [],
             donationRecords: [],
+
+            // Hydration tracking
+            setHasHydrated: (state: boolean) => {
+                set({ _hasHydrated: state });
+            },
 
             // Login with wallet
             login: async (walletAddress: string) => {
@@ -440,6 +448,7 @@ export const useUserStore = create<UserState>()(
             name: 'donatedao-user-storage',
             storage: createJSONStorage(() => localStorage),
             partialize: (state) => ({
+                isAuthenticated: state.isAuthenticated,
                 profile: state.profile,
                 transactions: state.transactions,
                 stats: state.stats,
@@ -447,6 +456,10 @@ export const useUserStore = create<UserState>()(
                 supportedCampaigns: state.supportedCampaigns,
                 donationRecords: state.donationRecords,
             }),
+            onRehydrateStorage: () => (state) => {
+                // Mark store as hydrated when localStorage is loaded
+                state?.setHasHydrated(true);
+            },
         }
     )
 );
