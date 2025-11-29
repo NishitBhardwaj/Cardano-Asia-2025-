@@ -13,6 +13,7 @@
     "dependencies": {
         "@meshsdk/core": "^1.7.0",
         "@meshsdk/react": "^1.7.0",
+        "@tensorflow/tfjs": "^4.22.0",
         "date-fns": "^3.6.0",
         "framer-motion": "^11.0.0",
         "html2canvas": "^1.4.1",
