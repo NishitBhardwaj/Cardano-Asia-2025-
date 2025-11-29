@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { MeshProvider } from '@meshsdk/react';
 import useAuth from '@/lib/hooks/useAuth';
+import ThemeToggle from './ThemeToggle';
 
 interface HeaderProps {
     showNav?: boolean;
@@ -116,7 +117,10 @@ function HeaderContent({ showNav = true, variant = 'default' }: HeaderProps) {
                 )}
 
                 {/* Auth Section */}
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 sm:gap-4">
+                    {/* Theme Toggle */}
+                    <ThemeToggle />
+                    
                     {isAuthenticated && profile ? (
                         // Authenticated User Menu
                         <div className="relative">

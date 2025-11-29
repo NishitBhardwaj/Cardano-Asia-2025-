@@ -262,9 +262,11 @@ DonateDAO addresses all these issues:
 ### 11. Visual Design & Responsive UI
 | Feature | Description |
 |---------|-------------|
+| **Light/Dark Mode** | Toggle between light and dark themes (sun/moon icons) |
+| **Theme Persistence** | Theme preference saved in localStorage |
 | **Background Patterns** | Dots, grid, diagonal, mesh gradient patterns |
 | **Animated Backgrounds** | Floating elements, pulsing effects |
-| **Glassmorphism UI** | Modern glass effect on components |
+| **Glassmorphism UI** | Modern glass effect on components (adapts to theme) |
 | **Full Responsive Design** | Mobile-first design with xs, sm, md, lg, xl, 2xl breakpoints |
 | **Mobile Navigation** | Hamburger menu for mobile devices |
 | **Responsive Typography** | Font sizes adapt to screen size |

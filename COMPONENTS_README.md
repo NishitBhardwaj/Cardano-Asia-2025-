@@ -599,6 +599,33 @@ interface CookieConsent {
 
 **Usage**: Automatically included in root layout
 
+### ThemeToggle.tsx
+**Purpose**: Light/Dark mode toggle button
+
+**Features**:
+- Sun icon (☀️) to switch to light mode
+- Moon icon (🌙) to switch to dark mode
+- Persists preference in localStorage
+- Smooth transition animations
+- Updates HTML class for CSS theme switching
+- Prevents hydration mismatch
+
+**Props**: None (self-contained component)
+
+**Storage Key**: `donatedao-theme`
+
+**Theme Classes**:
+- `.dark` - Dark mode (default)
+- `.light` - Light mode
+
+**Usage**: Included in Header component
+
+**CSS Variables Changed**:
+- `--background`, `--foreground`
+- `--card`, `--card-foreground`
+- `--border`, `--glass-bg`, `--glass-border`
+- All color variables adapt to current theme
+
 ### Captcha.tsx
 **Purpose**: Custom captcha component for signup protection
 

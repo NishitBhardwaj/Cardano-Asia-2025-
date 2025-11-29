@@ -37,16 +37,7 @@ export default function HomePage() {
 
     return (
         <div className="min-h-screen relative">
-            {/* Background Image */}
-            <div 
-                className="fixed inset-0 z-0"
-                style={{
-                    backgroundImage: `linear-gradient(to bottom, rgba(15, 23, 42, 0.85), rgba(15, 23, 42, 0.92)), url('/background.jpg')`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                    backgroundAttachment: 'fixed',
-                }}
-            />
+            {/* Background is now handled by CSS in globals.css based on theme */}
             
             {/* Content overlay */}
             <div className="relative z-10">
