@@ -566,6 +566,36 @@ interface ChatbotProps {
 - Opens/closes chatbot
 - Positioned with fixed positioning
 - Smooth animations
+- Messenger-style design (WhatsApp-like)
+
+**Usage**: Automatically included in root layout
+
+### CookieConsent.tsx
+**Purpose**: GDPR-compliant cookie consent banner
+
+**Features**:
+- Appears after 1.5s delay for new visitors
+- Accept/Decline options
+- Stores preferences in localStorage
+- Records timestamp of consent
+- Separate preferences for analytics, marketing, and functional cookies
+- Responsive design for all screen sizes
+- Modern glassmorphism styling
+
+**Props**: None (self-contained component)
+
+**Storage**:
+```typescript
+interface CookieConsent {
+  accepted: boolean;
+  timestamp: string;
+  preferences: {
+    analytics: boolean;
+    marketing: boolean;
+    functional: boolean;
+  };
+}
+```
 
 **Usage**: Automatically included in root layout
 

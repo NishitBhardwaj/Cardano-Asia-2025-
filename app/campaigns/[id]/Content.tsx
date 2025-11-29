@@ -361,43 +361,18 @@ function CampaignDetailInner() {
                         </div>
 
                         {/* QR Code Section - Visible to All */}
-                        <div className="glass p-6 rounded-2xl">
-                            <h3 className="font-bold mb-4">Share & Donate</h3>
-                            <div className="flex flex-col md:flex-row gap-6 items-start">
-                                <div className="flex-shrink-0">
-                                    <QRCodeGenerator
-                                        value={typeof window !== 'undefined' ? `${window.location.origin}/donate/${campaignId}` : ''}
-                                        title="Scan to Donate"
-                                        size={160}
-                                        campaignTitle={campaign.title}
-                                    />
-                                </div>
-                                <div className="flex-1 min-w-0 space-y-3">
-                                    <p className="text-sm text-foreground/70">
-                                        Share this campaign with your network! Scan the QR code or copy the link below.
-                                    </p>
-                                    <div className="flex gap-2 w-full">
-                                        <input
-                                            type="text"
-                                            value={typeof window !== 'undefined' ? `${window.location.origin}/donate/${campaignId}` : ''}
-                                            readOnly
-                                            className="flex-1 min-w-0 px-4 py-2 text-sm rounded-lg border border-border bg-background text-foreground truncate"
-                                        />
-                                        <button
-                                            onClick={() => {
-                                                const link = typeof window !== 'undefined' ? `${window.location.origin}/donate/${campaignId}` : '';
-                                                if (navigator.clipboard) {
-                                                    navigator.clipboard.writeText(link).then(() => {
-                                                        alert('Link copied to clipboard!');
-                                                    });
-                                                }
-                                            }}
-                                            className="px-4 py-2 glass rounded-lg hover:bg-primary/20 transition-colors text-sm font-medium flex-shrink-0"
-                                        >
-                                            Copy
-                                        </button>
-                                    </div>
-                                </div>
+                        <div className="glass p-4 sm:p-6 rounded-2xl">
+                            <h3 className="font-bold mb-4 text-sm sm:text-base">Share & Donate</h3>
+                            <div className="flex flex-col items-center">
+                                <QRCodeGenerator
+                                    value={typeof window !== 'undefined' ? `${window.location.origin}/donate/${campaignId}` : ''}
+                                    title="Scan to Donate"
+                                    size={140}
+                                    campaignTitle={campaign.title}
+                                />
+                                <p className="text-xs text-foreground/60 mt-3 text-center">
+                                    Scan QR or copy link to share
+                                </p>
                             </div>
                         </div>
 

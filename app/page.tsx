@@ -64,11 +64,8 @@ export default function HomePage() {
                     {/* Wallet-dependent greeting */}
                     {mounted && <WalletSection section="greeting" />}
 
-                    {/* Badge */}
-                    <div className="inline-flex items-center gap-2 badge-primary animate-fade-in">
-                        <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
-                        <span>Built on Cardano Blockchain</span>
-                    </div>
+                    {/* Badge - Only show if user is not logged in (logged-in users see it in greeting) */}
+                    {mounted && <WalletSection section="badge" />}
 
                     {/* Main Heading */}
                     <h1 className="text-6xl lg:text-8xl font-bold leading-tight animate-slide-up">

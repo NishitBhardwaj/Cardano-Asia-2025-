@@ -255,61 +255,43 @@ export default function AdminManagement({ campaignId }: AdminManagementProps) {
 
             {/* QR Code Section */}
             <div className="border-t border-border pt-6">
-                <div className="flex flex-col md:flex-row gap-6">
+                <div className="flex flex-col sm:flex-row gap-6">
                     {/* QR Code */}
-                    <div className="flex-shrink-0">
+                    <div className="flex-shrink-0 flex flex-col items-center">
                         <QRCodeGenerator
                             value={publicDonationLink}
                             title="Scan to Donate"
-                            size={160}
+                            size={140}
                             campaignTitle={campaign.title}
                         />
                     </div>
 
                     {/* Share Section */}
                     <div className="flex-1 min-w-0 space-y-4">
-                        <h4 className="text-lg font-semibold">Share Campaign</h4>
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Public Donation Link</label>
-                            <div className="flex gap-2 w-full">
-                                <input
-                                    type="text"
-                                    value={publicDonationLink}
-                                    readOnly
-                                    className="flex-1 min-w-0 px-4 py-2 rounded-lg border border-border bg-background text-foreground truncate"
-                                />
-                                <button
-                                    onClick={() => copyToClipboard(publicDonationLink, 'Donation')}
-                                    className="px-4 py-2 glass rounded-lg hover:bg-primary/20 transition-colors flex-shrink-0"
-                                >
-                                    Copy Link
-                                </button>
-                            </div>
-                        </div>
-
+                        <h4 className="text-base sm:text-lg font-semibold">Share Campaign</h4>
                         {/* Social Sharing Buttons */}
                         <div className="flex gap-2 flex-wrap">
                             <button
                                 onClick={() => shareToSocial('twitter')}
-                                className="px-4 py-2 bg-blue-500/20 border border-blue-500/50 text-blue-500 rounded-lg hover:bg-blue-500/30 transition-colors"
+                                className="px-3 py-2 text-sm bg-blue-500/20 border border-blue-500/50 text-blue-500 rounded-lg hover:bg-blue-500/30 transition-colors"
                             >
                                 Twitter
                             </button>
                             <button
                                 onClick={() => shareToSocial('facebook')}
-                                className="px-4 py-2 bg-blue-600/20 border border-blue-600/50 text-blue-600 rounded-lg hover:bg-blue-600/30 transition-colors"
+                                className="px-3 py-2 text-sm bg-blue-600/20 border border-blue-600/50 text-blue-600 rounded-lg hover:bg-blue-600/30 transition-colors"
                             >
                                 Facebook
                             </button>
                             <button
                                 onClick={() => shareToSocial('linkedin')}
-                                className="px-4 py-2 bg-blue-700/20 border border-blue-700/50 text-blue-700 rounded-lg hover:bg-blue-700/30 transition-colors"
+                                className="px-3 py-2 text-sm bg-blue-700/20 border border-blue-700/50 text-blue-700 rounded-lg hover:bg-blue-700/30 transition-colors"
                             >
                                 LinkedIn
                             </button>
                             <button
                                 onClick={() => shareToSocial('whatsapp')}
-                                className="px-4 py-2 bg-green-500/20 border border-green-500/50 text-green-500 rounded-lg hover:bg-green-500/30 transition-colors"
+                                className="px-3 py-2 text-sm bg-green-500/20 border border-green-500/50 text-green-500 rounded-lg hover:bg-green-500/30 transition-colors"
                             >
                                 WhatsApp
                             </button>

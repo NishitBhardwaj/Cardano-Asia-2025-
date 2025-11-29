@@ -6,7 +6,7 @@ import useAuth from '@/lib/hooks/useAuth';
 import { useUserStore } from '@/lib/store/userStore';
 
 interface WalletSectionProps {
-    section: 'greeting' | 'cta-buttons' | 'user-stats' | 'cta-main';
+    section: 'greeting' | 'cta-buttons' | 'user-stats' | 'cta-main' | 'badge';
 }
 
 function WalletSectionContent({ section }: WalletSectionProps) {
@@ -17,10 +17,27 @@ function WalletSectionContent({ section }: WalletSectionProps) {
         case 'greeting':
             if (!isAuthenticated || !profile) return null;
             return (
-                <div className="inline-flex items-center gap-3 glass-hover px-5 py-3 rounded-2xl mb-6 animate-fade-in">
-                    <span className="text-2xl animate-bounce-subtle">{profile.avatar}</span>
-                    <span className="text-foreground/80">Welcome back, <strong className="text-gradient">{profile.displayName}</strong>!</span>
-                    <span className="badge badge-accent text-xs">{stats.rank}</span>
+                <div className="space-y-4 mb-6">
+                    <div className="inline-flex items-center gap-3 glass-hover px-5 py-3 rounded-2xl animate-fade-in">
+                        <span className="text-2xl animate-bounce-subtle">{profile.avatar}</span>
+                        <span className="text-foreground/80">Welcome back, <strong className="text-gradient">{profile.displayName}</strong>!</span>
+                        <span className="badge badge-accent text-xs">{stats.rank}</span>
+                    </div>
+                    {/* Badge below welcome message */}
+                    <div className="inline-flex items-center gap-2 badge-primary animate-fade-in">
+                        <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+                        <span>Built on Cardano Blockchain</span>
+                    </div>
+                </div>
+            );
+
+        case 'badge':
+            // Only show badge if user is NOT logged in (logged-in users see it in greeting)
+            if (isAuthenticated) return null;
+            return (
+                <div className="inline-flex items-center gap-2 badge-primary animate-fade-in">
+                    <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+                    <span>Built on Cardano Blockchain</span>
                 </div>
             );
 
