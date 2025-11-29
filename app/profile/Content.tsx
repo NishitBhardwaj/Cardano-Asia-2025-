@@ -9,17 +9,34 @@ import { useUserStore } from '@/lib/store/userStore';
 import Header from '@/components/Header';
 import { BrowserWallet } from '@meshsdk/core';
 import TwoFactorSetup from '@/components/TwoFactorSetup';
+import { sendOTP, verifyOTP } from '@/lib/utils/otp';
 
 function ProfilePageInner() {
     const router = useRouter();
     const { isAuthenticated, profile, walletAddress, balance, disconnectWallet, availableWallets, connectWallet } = useAuth();
-    const { stats, transactions, campaigns, supportedCampaigns, _hasHydrated, sendVerificationEmail, linkWallet } = useUserStore();
+    const { stats, transactions, campaigns, supportedCampaigns, _hasHydrated, sendVerificationEmail, linkWallet, updateProfile } = useUserStore();
     const [activeTab, setActiveTab] = useState<'overview' | 'transactions' | 'campaigns' | 'settings'>('overview');
     const [isSendingVerification, setIsSendingVerification] = useState(false);
     const [isLinkingWallet, setIsLinkingWallet] = useState(false);
     const [verificationMessage, setVerificationMessage] = useState<string | null>(null);
     const [mounted, setMounted] = useState(false);
     const [loadingTimeout, setLoadingTimeout] = useState(false);
+    
+    // Edit profile state
+    const [isEditingProfile, setIsEditingProfile] = useState(false);
+    const [editForm, setEditForm] = useState({
+        firstName: '',
+        lastName: '',
+        email: '',
+    });
+    const [isSavingProfile, setIsSavingProfile] = useState(false);
+    
+    // Email verification state
+    const [emailVerificationSent, setEmailVerificationSent] = useState(false);
+    const [isSendingOTP, setIsSendingOTP] = useState(false);
+    const [otpInput, setOtpInput] = useState('');
+    const [isVerifyingOTP, setIsVerifyingOTP] = useState(false);
+    const [otpMessage, setOtpMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
     // Mark as mounted on client
     useEffect(() => {
@@ -210,68 +227,273 @@ function ProfilePageInner() {
 
                 {/* Settings Tab */}
                 {activeTab === 'settings' && (
-                    <div className="glass p-6 rounded-xl max-w-xl space-y-6">
-                        <h3 className="text-xl font-bold mb-6">Settings</h3>
-                        
-                        {/* Display Name */}
-                        <div>
-                            <label className="block text-sm text-foreground/60 mb-2">Display Name</label>
-                            <p className="glass px-4 py-3 rounded-lg">{profile.displayName}</p>
+                    <div className="glass p-4 sm:p-6 rounded-xl max-w-xl space-y-6">
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-lg sm:text-xl font-bold">Profile Settings</h3>
+                            {!isEditingProfile && (
+                                <button
+                                    onClick={() => {
+                                        setEditForm({
+                                            firstName: profile.firstName || '',
+                                            lastName: profile.lastName || '',
+                                            email: profile.email || '',
+                                        });
+                                        setIsEditingProfile(true);
+                                        setEmailVerificationSent(false);
+                                        setOtpInput('');
+                                        setOtpMessage(null);
+                                    }}
+                                    className="px-3 py-1.5 text-sm bg-primary/20 text-primary rounded-lg hover:bg-primary/30 transition-colors"
+                                >
+                                    ✏️ Edit
+                                </button>
+                            )}
                         </div>
-
-                        {/* Email Section */}
-                        {profile.email && (
-                            <div>
-                                <label className="block text-sm text-foreground/60 mb-2">Email Address</label>
-                                <div className="space-y-2">
-                                    <div className="flex items-center gap-2 glass px-4 py-3 rounded-lg">
-                                        <span>{profile.email}</span>
-                                        {profile.emailVerified ? (
-                                            <span className="text-green-500" title="Verified">✓ Verified</span>
-                                        ) : (
-                                            <span className="text-yellow-500" title="Not verified">⚠ Not Verified</span>
-                                        )}
+                        
+                        {isEditingProfile ? (
+                            /* Edit Mode */
+                            <div className="space-y-4">
+                                {/* Name Fields */}
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block text-sm text-foreground/60 mb-2">First Name</label>
+                                        <input
+                                            type="text"
+                                            value={editForm.firstName}
+                                            onChange={(e) => setEditForm(prev => ({ ...prev, firstName: e.target.value }))}
+                                            className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                                            placeholder="John"
+                                        />
                                     </div>
-                                    {!profile.emailVerified && (
-                                        <div className="space-y-2">
+                                    <div>
+                                        <label className="block text-sm text-foreground/60 mb-2">Last Name</label>
+                                        <input
+                                            type="text"
+                                            value={editForm.lastName}
+                                            onChange={(e) => setEditForm(prev => ({ ...prev, lastName: e.target.value }))}
+                                            className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                                            placeholder="Doe"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Email with Verification */}
+                                <div>
+                                    <label className="block text-sm text-foreground/60 mb-2">
+                                        Email Address
+                                        {profile.emailVerified && editForm.email === profile.email && (
+                                            <span className="text-green-500 text-xs ml-2">✓ Verified</span>
+                                        )}
+                                    </label>
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="email"
+                                            value={editForm.email}
+                                            onChange={(e) => {
+                                                setEditForm(prev => ({ ...prev, email: e.target.value }));
+                                                // Reset verification if email changes
+                                                if (emailVerificationSent) {
+                                                    setEmailVerificationSent(false);
+                                                    setOtpInput('');
+                                                    setOtpMessage(null);
+                                                }
+                                            }}
+                                            className="flex-1 px-3 py-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                                            placeholder="john@example.com"
+                                        />
+                                        {editForm.email && editForm.email !== profile.email && (
                                             <button
+                                                type="button"
                                                 onClick={async () => {
-                                                    setIsSendingVerification(true);
-                                                    setVerificationMessage(null);
+                                                    if (!editForm.email.trim()) return;
+                                                    setIsSendingOTP(true);
+                                                    setOtpMessage(null);
                                                     try {
-                                                        await sendVerificationEmail();
-                                                        setVerificationMessage('Verification email sent! Check your inbox.');
+                                                        const result = await sendOTP(editForm.email, 'email_verification');
+                                                        if (result.success) {
+                                                            setEmailVerificationSent(true);
+                                                            setOtpMessage({ type: 'success', text: 'Code sent to your email!' });
+                                                        } else {
+                                                            setOtpMessage({ type: 'error', text: result.error || 'Failed to send code' });
+                                                        }
                                                     } catch (error: any) {
-                                                        setVerificationMessage(error.message || 'Failed to send verification email');
+                                                        setOtpMessage({ type: 'error', text: error.message || 'Failed to send code' });
                                                     } finally {
-                                                        setIsSendingVerification(false);
+                                                        setIsSendingOTP(false);
                                                     }
                                                 }}
-                                                disabled={isSendingVerification}
-                                                className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
+                                                disabled={isSendingOTP || !editForm.email.trim()}
+                                                className="px-3 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 whitespace-nowrap"
                                             >
-                                                {isSendingVerification ? 'Sending...' : 'Send Verification Email'}
+                                                {isSendingOTP ? '...' : emailVerificationSent ? 'Resend' : 'Send Code'}
                                             </button>
-                                            {verificationMessage && (
-                                                <p className={`text-sm ${verificationMessage.includes('sent') ? 'text-green-500' : 'text-red-500'}`}>
-                                                    {verificationMessage}
-                                                </p>
+                                        )}
+                                        {(!editForm.email || editForm.email === profile.email) && !profile.emailVerified && profile.email && (
+                                            <button
+                                                type="button"
+                                                onClick={async () => {
+                                                    setIsSendingOTP(true);
+                                                    setOtpMessage(null);
+                                                    try {
+                                                        const result = await sendOTP(profile.email!, 'email_verification');
+                                                        if (result.success) {
+                                                            setEmailVerificationSent(true);
+                                                            setOtpMessage({ type: 'success', text: 'Code sent to your email!' });
+                                                        } else {
+                                                            setOtpMessage({ type: 'error', text: result.error || 'Failed to send code' });
+                                                        }
+                                                    } catch (error: any) {
+                                                        setOtpMessage({ type: 'error', text: error.message || 'Failed to send code' });
+                                                    } finally {
+                                                        setIsSendingOTP(false);
+                                                    }
+                                                }}
+                                                disabled={isSendingOTP}
+                                                className="px-3 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 whitespace-nowrap"
+                                            >
+                                                {isSendingOTP ? '...' : emailVerificationSent ? 'Resend' : 'Verify'}
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* OTP Input */}
+                                {emailVerificationSent && (
+                                    <div className="space-y-2 p-3 bg-primary/10 rounded-lg border border-primary/30">
+                                        <label className="block text-sm font-medium">Enter 6-digit Code</label>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                value={otpInput}
+                                                onChange={(e) => setOtpInput(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                                                placeholder="000000"
+                                                maxLength={6}
+                                                className="flex-1 px-3 py-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary text-center text-lg tracking-widest font-mono"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    if (otpInput.length !== 6) {
+                                                        setOtpMessage({ type: 'error', text: 'Enter 6 digits' });
+                                                        return;
+                                                    }
+                                                    setIsVerifyingOTP(true);
+                                                    setOtpMessage(null);
+                                                    const emailToVerify = editForm.email || profile.email || '';
+                                                    const isValid = verifyOTP(emailToVerify, otpInput, 'email_verification');
+                                                    if (isValid) {
+                                                        setOtpMessage({ type: 'success', text: '✓ Email verified!' });
+                                                        // Update profile with verified email
+                                                        updateProfile({
+                                                            email: emailToVerify,
+                                                            emailVerified: true,
+                                                        });
+                                                        setEmailVerificationSent(false);
+                                                    } else {
+                                                        setOtpMessage({ type: 'error', text: 'Invalid or expired code' });
+                                                    }
+                                                    setIsVerifyingOTP(false);
+                                                }}
+                                                disabled={isVerifyingOTP || otpInput.length !== 6}
+                                                className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors disabled:opacity-50"
+                                            >
+                                                {isVerifyingOTP ? '...' : 'Verify'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* OTP Message */}
+                                {otpMessage && (
+                                    <p className={`text-sm ${otpMessage.type === 'success' ? 'text-green-500' : 'text-red-500'}`}>
+                                        {otpMessage.text}
+                                    </p>
+                                )}
+
+                                {/* Save/Cancel Buttons */}
+                                <div className="flex gap-3 pt-2">
+                                    <button
+                                        onClick={() => {
+                                            setIsEditingProfile(false);
+                                            setEmailVerificationSent(false);
+                                            setOtpInput('');
+                                            setOtpMessage(null);
+                                        }}
+                                        className="flex-1 px-4 py-2 glass rounded-lg font-medium hover:bg-primary/20 transition-colors text-sm"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={async () => {
+                                            setIsSavingProfile(true);
+                                            try {
+                                                const displayName = `${editForm.firstName} ${editForm.lastName}`.trim() || profile.displayName;
+                                                updateProfile({
+                                                    firstName: editForm.firstName,
+                                                    lastName: editForm.lastName,
+                                                    displayName,
+                                                    email: editForm.email || profile.email,
+                                                    // Only mark as verified if email didn't change or was just verified
+                                                    emailVerified: editForm.email === profile.email ? profile.emailVerified : false,
+                                                });
+                                                setIsEditingProfile(false);
+                                                setOtpMessage({ type: 'success', text: 'Profile updated!' });
+                                            } catch (error: any) {
+                                                setOtpMessage({ type: 'error', text: error.message || 'Failed to save' });
+                                            } finally {
+                                                setIsSavingProfile(false);
+                                            }
+                                        }}
+                                        disabled={isSavingProfile}
+                                        className="flex-1 px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 text-sm"
+                                    >
+                                        {isSavingProfile ? 'Saving...' : 'Save Changes'}
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            /* View Mode */
+                            <div className="space-y-4">
+                                {/* Display Name */}
+                                <div>
+                                    <label className="block text-sm text-foreground/60 mb-1">Name</label>
+                                    <p className="glass px-4 py-3 rounded-lg text-sm sm:text-base">
+                                        {profile.firstName && profile.lastName 
+                                            ? `${profile.firstName} ${profile.lastName}`
+                                            : profile.displayName}
+                                    </p>
+                                </div>
+
+                                {/* Email Section */}
+                                <div>
+                                    <label className="block text-sm text-foreground/60 mb-1">Email Address</label>
+                                    {profile.email ? (
+                                        <div className="flex items-center gap-2 glass px-4 py-3 rounded-lg">
+                                            <span className="text-sm sm:text-base flex-1 truncate">{profile.email}</span>
+                                            {profile.emailVerified ? (
+                                                <span className="text-green-500 text-xs sm:text-sm whitespace-nowrap">✓ Verified</span>
+                                            ) : (
+                                                <span className="text-yellow-500 text-xs sm:text-sm whitespace-nowrap">⚠ Not Verified</span>
                                             )}
                                         </div>
+                                    ) : (
+                                        <p className="glass px-4 py-3 rounded-lg text-foreground/50 text-sm">
+                                            No email added - click Edit to add
+                                        </p>
                                     )}
                                 </div>
                             </div>
                         )}
 
                         {/* Wallet Section */}
-                        <div>
-                            <label className="block text-sm text-foreground/60 mb-2">Wallet</label>
+                        <div className="border-t border-border pt-6">
+                            <label className="block text-sm text-foreground/60 mb-2">Connected Wallet</label>
                             {walletAddress ? (
                                 <div className="space-y-2">
-                                    <p className="glass px-4 py-3 rounded-lg font-mono text-sm break-all">{walletAddress}</p>
+                                    <p className="glass px-4 py-3 rounded-lg font-mono text-xs sm:text-sm break-all">{walletAddress}</p>
                                     <button
                                         onClick={disconnectWallet}
-                                        className="w-full bg-red-500/20 border border-red-500/50 text-red-500 px-6 py-3 rounded-lg font-medium hover:bg-red-500/30 transition-colors"
+                                        className="w-full bg-red-500/20 border border-red-500/50 text-red-500 px-4 py-2.5 rounded-lg font-medium hover:bg-red-500/30 transition-colors text-sm"
                                     >
                                         Disconnect Wallet
                                     </button>
@@ -290,7 +512,6 @@ function ProfilePageInner() {
                                                             const walletInstance = await BrowserWallet.enable(wallet.name);
                                                             const address = await walletInstance.getChangeAddress();
                                                             await linkWallet(address);
-                                                            // Also connect via useAuth to get balance
                                                             await connectWallet(wallet.name);
                                                         } catch (error: any) {
                                                             alert(error.message || 'Failed to connect wallet');
@@ -302,7 +523,7 @@ function ProfilePageInner() {
                                                     className="w-full flex items-center gap-3 px-4 py-3 glass rounded-lg hover:bg-primary/20 transition-colors disabled:opacity-50"
                                                 >
                                                     <img src={wallet.icon} alt={wallet.name} className="w-8 h-8 rounded-lg" />
-                                                    <span className="font-medium capitalize">{wallet.name}</span>
+                                                    <span className="font-medium capitalize text-sm">{wallet.name}</span>
                                                 </button>
                                             ))}
                                         </div>
@@ -315,7 +536,9 @@ function ProfilePageInner() {
 
                         {/* Two-Factor Authentication */}
                         {profile.email && (
-                            <TwoFactorSetup email={profile.email} />
+                            <div className="border-t border-border pt-6">
+                                <TwoFactorSetup email={profile.email} />
+                            </div>
                         )}
                     </div>
                 )}
