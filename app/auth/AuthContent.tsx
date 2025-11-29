@@ -23,14 +23,46 @@ function AuthPageInner() {
     const [selectedWallet, setSelectedWallet] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [showWelcome, setShowWelcome] = useState(false);
+    const [redirectCountdown, setRedirectCountdown] = useState(3);
 
     // Redirect to profile if already authenticated
     useEffect(() => {
         if (isAuthenticated && profile) {
             setShowWelcome(true);
-            setTimeout(() => {
-                router.push('/profile');
-            }, 2000);
+            
+            // Start countdown
+            const countdownInterval = setInterval(() => {
+                setRedirectCountdown(prev => {
+                    if (prev <= 1) {
+                        clearInterval(countdownInterval);
+                        return 0;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+
+            // Redirect after countdown
+            const redirectTimer = setTimeout(() => {
+                try {
+                    router.replace('/profile');
+                } catch (e) {
+                    // Fallback to window.location if router fails
+                    window.location.href = '/profile';
+                }
+            }, 3000);
+
+            // Secondary fallback - if still on auth page after 5 seconds, force redirect
+            const fallbackTimer = setTimeout(() => {
+                if (window.location.pathname === '/auth') {
+                    window.location.href = '/profile';
+                }
+            }, 5000);
+
+            return () => {
+                clearInterval(countdownInterval);
+                clearTimeout(redirectTimer);
+                clearTimeout(fallbackTimer);
+            };
         }
     }, [isAuthenticated, profile, router]);
 
@@ -46,6 +78,15 @@ function AuthPageInner() {
         }
     };
 
+    // Manual redirect function
+    const handleManualRedirect = () => {
+        try {
+            router.replace('/profile');
+        } catch (e) {
+            window.location.href = '/profile';
+        }
+    };
+
     // Show welcome screen after successful login
     if (showWelcome && profile) {
         return (
@@ -54,8 +95,20 @@ function AuthPageInner() {
                     <div className="text-8xl mb-4">{profile.avatar}</div>
                     <h1 className="text-4xl font-bold">Welcome back!</h1>
                     <p className="text-xl text-foreground/70">{profile.displayName}</p>
-                    <p className="text-foreground/50">Redirecting to your profile...</p>
+                    <p className="text-foreground/50">
+                        {redirectCountdown > 0 
+                            ? `Redirecting in ${redirectCountdown}...` 
+                            : 'Redirecting...'}
+                    </p>
                     <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+                    
+                    {/* Fallback button if auto-redirect fails */}
+                    <button
+                        onClick={handleManualRedirect}
+                        className="mt-4 px-6 py-2 text-sm text-primary hover:underline"
+                    >
+                        Click here if not redirected →
+                    </button>
                 </div>
             </div>
         );
