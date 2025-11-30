@@ -115,6 +115,12 @@ export default function Captcha({ onVerify, resetKey }: CaptchaProps) {
         }
     }, [userInput, captchaText]);
 
+    // Handle refresh button click
+    const handleRefresh = useCallback(() => {
+        const text = generateCaptcha();
+        drawCaptcha(text);
+    }, [generateCaptcha, drawCaptcha]);
+
     return (
         <div className="space-y-3">
             <div className="flex items-center gap-4">
@@ -126,7 +132,7 @@ export default function Captcha({ onVerify, resetKey }: CaptchaProps) {
                 />
                 <button
                     type="button"
-                    onClick={generateCaptcha}
+                    onClick={handleRefresh}
                     className="px-4 py-2 text-sm glass rounded-lg hover:bg-primary/20 transition-colors"
                     title="Refresh captcha"
                 >
