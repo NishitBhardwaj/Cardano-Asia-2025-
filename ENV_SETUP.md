@@ -66,10 +66,10 @@ NEXT_PUBLIC_MULTISIG_THRESHOLD=3
 # TELEGRAM BOT CONFIGURATION (Optional)
 # ============================================================================
 # For chatbot agent handoff functionality
-# Bot token is already configured in code, but you can override it here
+# Get bot token from @BotFather on Telegram
 # Get agent chat ID by visiting /api/telegram/get-chat-id after agent messages bot
 
-TELEGRAM_BOT_TOKEN=8405397592:AAF6SdgC5MvVBwlKUuOBO-xEcQG0aDGxlQk
+TELEGRAM_BOT_TOKEN=8523889622:AAEfoZCOi2JyyxssYBNt3Xxb0B_m4ZRKIJE
 TELEGRAM_AGENT_CHAT_ID=  # Get this from /api/telegram/get-chat-id
 
 # ============================================================================

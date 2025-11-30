@@ -1068,9 +1068,23 @@ async function estimateTransactionFee(txSizeBytes: number): Promise<FeeEstimate>
 
 #### Configuration
 
+The Telegram bot token is configured via environment variables (never hardcoded):
+
 ```typescript
-const TELEGRAM_BOT_TOKEN = '8405397592:AAF6SdgC5MvVBwlKUuOBO-xEcQG0aDGxlQk';
-const TELEGRAM_API_URL = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
+// lib/utils/telegram.ts
+export function getBotToken(): string {
+    const token = process.env.TELEGRAM_BOT_TOKEN;
+    if (!token) {
+        throw new Error('TELEGRAM_BOT_TOKEN environment variable is not set');
+    }
+    return token;
+}
+```
+
+**Set in `.env.local`:**
+```bash
+TELEGRAM_BOT_TOKEN=8523889622:AAEfoZCOi2JyyxssYBNt3Xxb0B_m4ZRKIJE
+TELEGRAM_AGENT_CHAT_ID=your_agent_chat_id_here
 ```
 
 #### Available Endpoints

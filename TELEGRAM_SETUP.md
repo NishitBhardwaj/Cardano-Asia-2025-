@@ -8,10 +8,13 @@ The chatbot can automatically connect users to a Telegram agent (Sumanth) when i
 
 ## Bot Token
 
-The bot token is already configured:
+The bot token must be set in your `.env.local` file:
+
+```bash
+TELEGRAM_BOT_TOKEN=8523889622:AAEfoZCOi2JyyxssYBNt3Xxb0B_m4ZRKIJE
 ```
-8405397592:AAF6SdgC5MvVBwlKUuOBO-xEcQG0aDGxlQk
-```
+
+**⚠️ Important:** Never hardcode the token in source code. Always use environment variables.
 
 ## Setup Steps
 
@@ -56,9 +59,14 @@ For receiving messages from Telegram to your server:
    GET /api/telegram/webhook?action=set-webhook&url=https://yourdomain.com/api/telegram/webhook
    ```
 
-2. Or manually:
+2. Or manually (replace `<YOUR_TOKEN>` with your actual token):
    ```bash
-   curl "https://api.telegram.org/bot8405397592:AAF6SdgC5MvVBwlKUuOBO-xEcQG0aDGxlQk/setWebhook?url=https://yourdomain.com/api/telegram/webhook"
+   curl "https://api.telegram.org/bot<YOUR_TOKEN>/setWebhook?url=https://yourdomain.com/api/telegram/webhook"
+   ```
+   
+   Or use the helper endpoint:
+   ```bash
+   GET /api/telegram/webhook?action=set-webhook&url=https://yourdomain.com/api/telegram/webhook
    ```
 
 ### 4. Test the Integration
