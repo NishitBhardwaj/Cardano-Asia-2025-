@@ -210,10 +210,12 @@ export function ProgressBar({
 }
 
 // Export all as default
-export default {
+const Charts = {
     SimpleBarChart,
     SimpleAreaChart,
     SimplePieChart,
     ProgressBar,
 };
+
+export default Charts;
 

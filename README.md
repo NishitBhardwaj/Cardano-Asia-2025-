@@ -1389,19 +1389,452 @@ interface ChatbotProps {
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### Telegram Integration
+### Telegram Integration - Production-Ready Human Support
 
-The chatbot integrates with Telegram Bot API to connect users to a human agent:
+DonateDAO includes a **production-style Telegram integration** that seamlessly bridges web chat with Telegram for human agent support. This allows users to chat in the web DApp while messages are mirrored to a Telegram support chat, and agent replies are pushed back into the web chatbot UI in real-time.
 
-**Setup Required:**
-1. Get Telegram bot token (already configured)
-2. Get agent chat ID: Visit `/api/telegram/get-chat-id`
-3. Set environment variable: `TELEGRAM_AGENT_CHAT_ID=your_chat_id`
+#### How It Works
 
-**API Endpoints:**
-- `POST /api/telegram/connect` - Send user message to agent
-- `GET /api/telegram/get-chat-id` - Get all chat IDs
-- `POST /api/telegram/webhook` - Receive messages from Telegram
+The integration uses a **session-based message bridging system**:
+
+1. **User Session Creation**: Each user gets a unique `sessionId` (UUID) stored in localStorage
+2. **Message Bridging**: User messages are stored in an in-memory session store and sent to Telegram
+3. **Agent Replies**: Agent replies with format `#sess:<SESSION_ID> Your reply` in Telegram
+4. **Real-time Polling**: Frontend polls every 3 seconds for new agent messages
+5. **Message Display**: Agent messages appear in the web chat UI with blue styling
+
+#### Architecture Overview
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    TELEGRAM INTEGRATION FLOW                     │
+│                                                                  │
+│  Web Chat (Browser)          Server (API Routes)    Telegram    │
+│  ────────────────            ───────────────────    ────────   │
+│                                                                  │
+│  1. User clicks "Connect"                                        │
+│        │                                                          │
+│        ├─→ POST /api/telegram/connect                           │
+│        │   • Creates sessionId                                   │
+│        │   • Stores message in session store                     │
+│        │   • Sends formatted message to Telegram                │
+│        │                                                          │
+│        └─→ Telegram Bot API                                      │
+│            • Message sent to agent chat                          │
+│            • Agent receives:                                     │
+│              "🆕 New support request...                          │
+│               Session: abc-123-def                              │
+│               User: john@example.com                            │
+│               Last message: User needs help"                     │
+│                                                                  │
+│  2. User sends messages (while connected)                        │
+│        │                                                          │
+│        ├─→ POST /api/telegram/connect (for each message)         │
+│        │   • Appends to session store                            │
+│        │   • Forwards to Telegram                                │
+│        │                                                          │
+│  3. Agent replies in Telegram                                    │
+│        │                                                          │
+│        ├─→ #sess:abc-123-def Hello! How can I help?             │
+│        │                                                          │
+│        └─→ POST /api/telegram/webhook                             │
+│            • Parses sessionId from message                       │
+│            • Extracts reply text                                 │
+│            • Adds to session store (role: 'agent')               │
+│                                                                  │
+│  4. Frontend polls for messages                                  │
+│        │                                                          │
+│        ├─→ GET /api/telegram/messages?sessionId=...&since=...    │
+│        │   • Returns new agent messages                         │
+│        │   • Updates chat UI                                     │
+│        │                                                          │
+│        └─→ Agent message appears in web chat                     │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+#### Session Store (`lib/store/telegramSessions.ts`)
+
+The system uses an **in-memory session store** for message bridging:
+
+```typescript
+interface ChatMessage {
+    id: string;
+    role: 'user' | 'agent';
+    text: string;
+    timestamp: number;
+}
+
+// Store: Map<sessionId, ChatMessage[]>
+```
+
+**Important Note**: This is a simple in-memory store for demo/hackathon purposes. In production, use a proper database (Redis, PostgreSQL) as serverless functions can lose memory between invocations.
+
+**Functions:**
+- `ensureSession(sessionId)` - Create session if doesn't exist
+- `appendMessage(sessionId, message)` - Add message to session
+- `getMessages(sessionId)` - Get all messages for session
+- `getMessagesSince(sessionId, timestamp)` - Get messages after timestamp
+- `cleanupOldSessions()` - Remove sessions older than 24 hours
+
+#### Server Utilities (`lib/utils/telegram.ts`)
+
+All Telegram API interactions are handled server-side:
+
+```typescript
+// Get bot token from environment (throws if missing)
+getBotToken(): string
+
+// Get agent chat ID from environment
+getAgentChatId(): string | null
+
+// Send plain text message
+sendMessage(chatId: string | number, text: string): Promise<void>
+
+// Send Markdown-formatted message
+sendMarkdownMessage(chatId: string | number, text: string): Promise<void>
+
+// Answer callback query (for inline buttons)
+answerCallbackQuery(callbackQueryId: string, text?: string): Promise<void>
+```
+
+**Security**: All functions read from `process.env.TELEGRAM_BOT_TOKEN` - never hardcoded.
+
+#### API Endpoints
+
+##### 1. POST `/api/telegram/connect`
+
+**Purpose**: Connect user to agent and send initial message
+
+**Request Body:**
+```json
+{
+  "sessionId": "abc-123-def-456",
+  "userMessage": "I need help with wallet connection",
+  "userInfo": {
+    "email": "user@example.com",
+    "username": "johndoe"
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "success": true
+}
+```
+
+**What It Does:**
+1. Ensures session exists in store
+2. Appends user message to session (role: 'user')
+3. Formats message for agent:
+   ```
+   🆕 New support request from DonateDAO
+   
+   Session: abc-123-def-456
+   User: johndoe (user@example.com)
+   
+   Last message:
+   I need help with wallet connection
+   
+   💬 Reply with: #sess:abc-123-def-456 Your reply here
+   ```
+4. Sends to `TELEGRAM_AGENT_CHAT_ID` via Telegram Bot API
+5. Returns success
+
+##### 2. GET `/api/telegram/messages`
+
+**Purpose**: Poll for new agent messages (called every 3 seconds when connected)
+
+**Query Parameters:**
+- `sessionId` (required) - User's session ID
+- `since` (optional) - Timestamp to get messages after
+
+**Example:**
+```
+GET /api/telegram/messages?sessionId=abc-123-def&since=1704067200000
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "messages": [
+    {
+      "id": "msg-123",
+      "role": "agent",
+      "text": "Hello! How can I help you?",
+      "timestamp": 1704067300000
+    }
+  ]
+}
+```
+
+**What It Does:**
+1. Validates sessionId parameter
+2. Gets messages from session store
+3. Filters by `since` timestamp if provided
+4. Returns only messages with `role: 'agent'`
+
+##### 3. POST `/api/telegram/webhook`
+
+**Purpose**: Receive messages from Telegram (configured in BotFather)
+
+**Request Body:** (Telegram webhook payload)
+```json
+{
+  "message": {
+    "chat": { "id": 123456789 },
+    "text": "#sess:abc-123-def Hello! How can I help?",
+    "from": { "username": "agent_sumanth" }
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "ok": true
+}
+```
+
+**What It Does:**
+1. Parses incoming Telegram message
+2. Extracts sessionId from format: `#sess:<SESSION_ID> Your reply`
+3. Extracts reply text (everything after sessionId)
+4. Adds message to session store with `role: 'agent'`
+5. Optionally confirms delivery to agent
+6. Always returns `{ ok: true }` to prevent Telegram retries
+
+**Message Format for Agent:**
+```
+#sess:<SESSION_ID> Your reply text here
+```
+
+Example:
+```
+#sess:abc-123-def-456 Hello! I can help you with wallet connection. First, make sure your wallet extension is installed.
+```
+
+##### 4. GET `/api/telegram/webhook?action=set-webhook`
+
+**Purpose**: Helper endpoint to set webhook URL in Telegram
+
+**Query Parameters:**
+- `action=set-webhook` (required)
+- `url` (optional) - Webhook URL (defaults to deployment URL)
+
+**Example:**
+```
+GET /api/telegram/webhook?action=set-webhook&url=https://yourdomain.com/api/telegram/webhook
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Webhook was set",
+  "webhookUrl": "https://yourdomain.com/api/telegram/webhook"
+}
+```
+
+##### 5. GET `/api/telegram/get-chat-id`
+
+**Purpose**: Helper endpoint to find agent chat ID from recent Telegram updates
+
+**Response:**
+```json
+{
+  "success": true,
+  "chats": [
+    {
+      "chatId": 123456789,
+      "chatType": "private",
+      "username": "agent_sumanth",
+      "firstName": "Sumanth",
+      "lastMessage": "Hello!",
+      "lastMessageDate": "2025-01-15T10:30:00.000Z"
+    }
+  ],
+  "instructions": [
+    "1. Find your chat ID (agent) from the list above",
+    "2. Set it as TELEGRAM_AGENT_CHAT_ID in .env.local",
+    "3. Make sure the bot has received at least one message from the agent"
+  ]
+}
+```
+
+#### Frontend Integration (`components/Chatbot.tsx`)
+
+The chatbot component handles the full integration:
+
+**State Management:**
+```typescript
+const [sessionId, setSessionId] = useState<string>(''); // Generated UUID
+const [connectedToAgent, setConnectedToAgent] = useState(false);
+const [lastServerTimestamp, setLastServerTimestamp] = useState<number | null>(null);
+```
+
+**SessionId Generation:**
+- Generated on mount: `crypto.randomUUID()`
+- Stored in localStorage: `donatedao-telegram-session`
+- Persists across page refreshes
+
+**Connection Flow:**
+1. User clicks "Connect to Agent"
+2. Calls `POST /api/telegram/connect` with sessionId and user message
+3. Sets `connectedToAgent = true`
+4. Shows system message: "✅ You are now connected to a human agent..."
+
+**Message Polling:**
+```typescript
+useEffect(() => {
+  if (!connectedToAgent || !sessionId) return;
+  
+  const interval = setInterval(async () => {
+    const response = await fetch(
+      `/api/telegram/messages?sessionId=${sessionId}&since=${lastServerTimestamp || 0}`
+    );
+    const data = await response.json();
+    
+    if (data.success && data.messages.length > 0) {
+      // Add agent messages to chat UI
+      setMessages(prev => [...prev, ...data.messages]);
+      setLastServerTimestamp(latestTimestamp);
+    }
+  }, 3000); // Poll every 3 seconds
+  
+  return () => clearInterval(interval);
+}, [connectedToAgent, sessionId, lastServerTimestamp]);
+```
+
+**Message Sending (When Connected):**
+- User messages are appended locally to chat
+- Each message is also sent to Telegram via `POST /api/telegram/connect`
+- AI responses are disabled when connected to agent
+
+#### Setup Instructions
+
+**Step 1: Configure Environment Variables**
+
+Add to `.env.local`:
+```bash
+# Telegram Bot Token (from BotFather)
+TELEGRAM_BOT_TOKEN=8523889622:AAEfoZCOi2JyyxssYBNt3Xxb0B_m4ZRKIJE
+
+# Agent Chat ID (get from /api/telegram/get-chat-id)
+TELEGRAM_AGENT_CHAT_ID=123456789
+
+# Public App URL (for webhook - auto-detected on Vercel)
+NEXT_PUBLIC_APP_URL=https://yourdomain.com
+```
+
+**Step 2: Get Agent Chat ID**
+
+1. Start a conversation with your bot on Telegram
+2. Send any message to the bot
+3. Visit: `http://localhost:3000/api/telegram/get-chat-id`
+4. Find your chat ID from the list
+5. Add to `.env.local` as `TELEGRAM_AGENT_CHAT_ID`
+
+**Step 3: Configure Webhook (Production)**
+
+For production deployment, set the webhook URL:
+
+```bash
+# Option 1: Use helper endpoint
+GET https://yourdomain.com/api/telegram/webhook?action=set-webhook
+
+# Option 2: Manual curl
+curl "https://api.telegram.org/bot<YOUR_TOKEN>/setWebhook?url=https://yourdomain.com/api/telegram/webhook"
+```
+
+**Step 4: Test the Integration**
+
+1. Open the app and click the chat button
+2. Ask a question the bot can't answer
+3. Click "Connect to Agent"
+4. Check Telegram - agent should receive the message
+5. Agent replies: `#sess:<SESSION_ID> Your reply here`
+6. Reply should appear in web chat within 3 seconds
+
+#### Agent Reply Format
+
+Agents must reply in Telegram with this exact format:
+
+```
+#sess:<SESSION_ID> Your reply text here
+```
+
+**Example:**
+```
+#sess:abc-123-def-456 Hello! I can help you with wallet connection. First, make sure you have the Nami wallet extension installed.
+```
+
+**Important:**
+- Session ID must match the one in the original message
+- Format is case-sensitive
+- Reply text can be multiple lines
+- Session ID is extracted using regex: `/^#sess:([a-zA-Z0-9-]+)\s+([\s\S]+)$/`
+
+#### Security Considerations
+
+1. **Environment Variables**: All secrets use env vars, never hardcoded
+2. **Server-Side Only**: Telegram API calls only in API routes (server code)
+3. **Session Validation**: SessionId is validated on all endpoints
+4. **Error Handling**: Graceful fallbacks if Telegram API fails
+5. **Rate Limiting**: Consider adding rate limits for production
+6. **Webhook Security**: Validate webhook requests in production (optional)
+
+#### Troubleshooting
+
+**Issue: "TELEGRAM_BOT_TOKEN not set"**
+- Solution: Add `TELEGRAM_BOT_TOKEN` to `.env.local`
+- Restart dev server after adding
+
+**Issue: "Agent chat ID not configured"**
+- Solution: Visit `/api/telegram/get-chat-id` and set `TELEGRAM_AGENT_CHAT_ID`
+- Make sure agent has sent at least one message to bot
+
+**Issue: Messages not appearing in web chat**
+- Check browser console for polling errors
+- Verify webhook is set correctly
+- Check agent is using correct format: `#sess:<ID> Reply`
+- Verify sessionId matches in both messages
+
+**Issue: Webhook not receiving messages**
+- Verify webhook URL is set: `GET /api/telegram/webhook?action=set-webhook`
+- Check Telegram bot is active and not blocked
+- Verify bot token is correct
+
+#### Production Deployment
+
+For production deployment:
+
+1. **Set Environment Variables in Vercel/Netlify:**
+   - `TELEGRAM_BOT_TOKEN`
+   - `TELEGRAM_AGENT_CHAT_ID`
+   - `NEXT_PUBLIC_APP_URL` (auto-set on Vercel)
+
+2. **Configure Webhook:**
+   ```bash
+   GET https://yourdomain.com/api/telegram/webhook?action=set-webhook
+   ```
+
+3. **Replace In-Memory Store:**
+   - Current: In-memory Map (lost on serverless restart)
+   - Production: Use Redis, PostgreSQL, or similar database
+   - Update `lib/store/telegramSessions.ts` to use database
+
+4. **Add Rate Limiting:**
+   - Limit `/api/telegram/connect` requests per session
+   - Limit `/api/telegram/messages` polling frequency
+
+5. **Monitor & Log:**
+   - Log all Telegram API calls
+   - Monitor webhook delivery
+   - Track session creation/cleanup
 
 See `TELEGRAM_SETUP.md` for detailed setup instructions.
 

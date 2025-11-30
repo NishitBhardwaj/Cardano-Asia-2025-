@@ -311,10 +311,12 @@ export default function Chatbot({ isOpen, onClose }: ChatbotProps) {
                             setMessages(prev => [...prev, ...newMessages]);
                             
                             // Update last timestamp
-                            const latestTimestamp = Math.max(
-                                ...data.messages.map((m: any) => m.timestamp)
-                            );
-                            setLastServerTimestamp(latestTimestamp);
+                            if (data.messages && data.messages.length > 0) {
+                                const latestTimestamp = Math.max(
+                                    ...data.messages.map((m: any) => m.timestamp)
+                                );
+                                setLastServerTimestamp(latestTimestamp);
+                            }
                         }
                     }
                 }
