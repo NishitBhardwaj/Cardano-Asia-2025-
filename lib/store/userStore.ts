@@ -267,15 +267,26 @@ export const useUserStore = create<UserState>()(
                 set({ isLoading: true });
                 
                 try {
+                    // Check if localStorage is available
+                    if (typeof window === 'undefined') {
+                        throw new Error('Cannot authenticate on server side');
+                    }
+                    
                     const { email, password, firstName, lastName, username } = credentials;
                     
                     // Check if this is signup (has firstName) or login
                     const isSignup = !!firstName;
                     
+                    // Safely access localStorage
+                    let existingUsers: any[] = [];
+                    try {
+                        existingUsers = JSON.parse(localStorage.getItem('donatedao-users') || '[]');
+                    } catch {
+                        existingUsers = [];
+                    }
+                    
                     if (isSignup) {
                         // Signup - create new user
-                        // Check if email already exists in localStorage
-                        const existingUsers = JSON.parse(localStorage.getItem('donatedao-users') || '[]');
                         const userExists = existingUsers.find((u: any) => u.email === email);
                         
                         if (userExists) {
@@ -315,7 +326,12 @@ export const useUserStore = create<UserState>()(
                             profile: newProfile,
                         };
                         existingUsers.push(newUser);
-                        localStorage.setItem('donatedao-users', JSON.stringify(existingUsers));
+                        
+                        try {
+                            localStorage.setItem('donatedao-users', JSON.stringify(existingUsers));
+                        } catch (e) {
+                            console.error('Failed to save user to localStorage:', e);
+                        }
                         
                         set({
                             isAuthenticated: true,
@@ -329,7 +345,6 @@ export const useUserStore = create<UserState>()(
                         });
                     } else {
                         // Login - verify credentials
-                        const existingUsers = JSON.parse(localStorage.getItem('donatedao-users') || '[]');
                         const user = existingUsers.find((u: any) => u.email === email);
                         
                         if (!user) {
@@ -346,7 +361,12 @@ export const useUserStore = create<UserState>()(
                         const updatedUsers = existingUsers.map((u: any) => 
                             u.email === email ? user : u
                         );
-                        localStorage.setItem('donatedao-users', JSON.stringify(updatedUsers));
+                        
+                        try {
+                            localStorage.setItem('donatedao-users', JSON.stringify(updatedUsers));
+                        } catch (e) {
+                            console.error('Failed to update user in localStorage:', e);
+                        }
                         
                         set({
                             isAuthenticated: true,
@@ -686,13 +706,17 @@ export const useUserStore = create<UserState>()(
                     return true; // Same user, available
                 }
                 
-                // Check all users in localStorage
-                const existingUsers = JSON.parse(localStorage.getItem('donatedao-users') || '[]');
-                const usernameExists = existingUsers.some((u: any) => 
-                    u.profile?.username?.toLowerCase() === username.toLowerCase()
-                );
-                
-                return !usernameExists;
+                // Check all users in localStorage (safely)
+                if (typeof window === 'undefined') return true;
+                try {
+                    const existingUsers = JSON.parse(localStorage.getItem('donatedao-users') || '[]');
+                    const usernameExists = existingUsers.some((u: any) => 
+                        u.profile?.username?.toLowerCase() === username.toLowerCase()
+                    );
+                    return !usernameExists;
+                } catch {
+                    return true;
+                }
             },
 
             findUserByUsername: (username: string) => {
@@ -708,18 +732,23 @@ export const useUserStore = create<UserState>()(
                     };
                 }
                 
-                // Check all users in localStorage
-                const existingUsers = JSON.parse(localStorage.getItem('donatedao-users') || '[]');
-                const user = existingUsers.find((u: any) => 
-                    u.profile?.username?.toLowerCase() === username.toLowerCase()
-                );
-                
-                if (user?.profile) {
-                    return {
-                        email: user.profile.email,
-                        walletAddress: user.profile.walletAddress,
-                        displayName: user.profile.displayName,
-                    };
+                // Check all users in localStorage (safely)
+                if (typeof window === 'undefined') return null;
+                try {
+                    const existingUsers = JSON.parse(localStorage.getItem('donatedao-users') || '[]');
+                    const user = existingUsers.find((u: any) => 
+                        u.profile?.username?.toLowerCase() === username.toLowerCase()
+                    );
+                    
+                    if (user?.profile) {
+                        return {
+                            email: user.profile.email,
+                            walletAddress: user.profile.walletAddress,
+                            displayName: user.profile.displayName,
+                        };
+                    }
+                } catch {
+                    return null;
                 }
                 
                 return null;

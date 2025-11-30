@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 interface CaptchaProps {
     onVerify: (isValid: boolean) => void;
@@ -12,9 +12,15 @@ export default function Captcha({ onVerify, resetKey }: CaptchaProps) {
     const [userInput, setUserInput] = useState('');
     const [isValid, setIsValid] = useState(false);
     const canvasRef = useRef<HTMLCanvasElement>(null);
+    const onVerifyRef = useRef(onVerify);
+    
+    // Keep ref updated
+    useEffect(() => {
+        onVerifyRef.current = onVerify;
+    }, [onVerify]);
 
     // Generate random captcha text
-    const generateCaptcha = () => {
+    const generateCaptcha = useCallback(() => {
         const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
         let text = '';
         for (let i = 0; i < 5; i++) {
@@ -23,12 +29,12 @@ export default function Captcha({ onVerify, resetKey }: CaptchaProps) {
         setCaptchaText(text);
         setUserInput('');
         setIsValid(false);
-        onVerify(false);
-        drawCaptcha(text);
-    };
+        onVerifyRef.current(false);
+        return text;
+    }, []);
 
     // Draw captcha on canvas
-    const drawCaptcha = (text: string) => {
+    const drawCaptcha = useCallback((text: string) => {
         const canvas = canvasRef.current;
         if (!canvas) return;
 
@@ -79,31 +85,35 @@ export default function Captcha({ onVerify, resetKey }: CaptchaProps) {
             );
             ctx.fill();
         }
-    };
+    }, []);
 
     // Generate captcha on mount
     useEffect(() => {
-        generateCaptcha();
-    }, []);
+        const text = generateCaptcha();
+        drawCaptcha(text);
+    }, [generateCaptcha, drawCaptcha]);
 
     // Handle reset when resetKey changes
     useEffect(() => {
         if (resetKey !== undefined && resetKey > 0) {
-            generateCaptcha();
+            const text = generateCaptcha();
+            drawCaptcha(text);
         }
-    }, [resetKey]);
+    }, [resetKey, generateCaptcha, drawCaptcha]);
 
     // Validate input
     useEffect(() => {
-        if (userInput.length === captchaText.length) {
+        if (userInput.length === captchaText.length && captchaText.length > 0) {
             const valid = userInput.toUpperCase() === captchaText.toUpperCase();
             setIsValid(valid);
-            onVerify(valid);
+            onVerifyRef.current(valid);
         } else {
             setIsValid(false);
-            onVerify(false);
+            if (captchaText.length > 0) {
+                onVerifyRef.current(false);
+            }
         }
-    }, [userInput, captchaText, onVerify]);
+    }, [userInput, captchaText]);
 
     return (
         <div className="space-y-3">

@@ -40,14 +40,14 @@ export default function CookieConsent() {
     return (
         <div className="fixed bottom-0 left-0 right-0 z-50 p-4 animate-slide-up">
             <div className="container mx-auto max-w-4xl">
-                <div className="glass p-4 sm:p-6 rounded-2xl border border-white/10 shadow-2xl">
+                <div className="bg-[#1e293b] p-4 sm:p-6 rounded-2xl border border-border shadow-2xl">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                         <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2">
                                 <span className="text-xl">🍪</span>
-                                <h4 className="font-bold text-sm sm:text-base">Cookie Preferences</h4>
+                                <h4 className="font-bold text-sm sm:text-base text-white">Cookie Preferences</h4>
                             </div>
-                            <p className="text-xs sm:text-sm text-foreground/70">
+                            <p className="text-xs sm:text-sm text-gray-300">
                                 We use cookies to improve your experience, analyze traffic, and personalize content. 
                                 By clicking &quot;Accept&quot;, you consent to our use of cookies.
                             </p>
@@ -55,7 +55,7 @@ export default function CookieConsent() {
                         <div className="flex gap-2 w-full sm:w-auto">
                             <button
                                 onClick={declineCookies}
-                                className="flex-1 sm:flex-none px-4 py-2 text-sm glass rounded-lg hover:bg-white/10 transition-colors"
+                                className="flex-1 sm:flex-none px-4 py-2 text-sm bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
                             >
                                 Decline
                             </button>
