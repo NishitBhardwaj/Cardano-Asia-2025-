@@ -13,6 +13,17 @@ export async function GET(request: NextRequest) {
     try {
         const token = getBotToken();
         const response = await fetch(`${TELEGRAM_API_BASE}/bot${token}/getUpdates`);
+        
+        if (!response.ok) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    error: `Telegram API error: ${response.status} ${response.statusText}`,
+                },
+                { status: response.status }
+            );
+        }
+        
         const data = await response.json();
 
         if (!data.ok) {
@@ -28,21 +39,23 @@ export async function GET(request: NextRequest) {
         // Extract unique chat IDs
         const chats = new Map();
 
-        if (data.result && data.result.length > 0) {
+        if (data.result && Array.isArray(data.result) && data.result.length > 0) {
             data.result.forEach((update: any) => {
-                if (update.message) {
+                if (update.message && update.message.chat && update.message.chat.id) {
                     const chat = update.message.chat;
                     const from = update.message.from;
 
                     if (!chats.has(chat.id)) {
                         chats.set(chat.id, {
                             chatId: chat.id,
-                            chatType: chat.type,
-                            username: chat.username || from?.username,
-                            firstName: chat.first_name || from?.first_name,
-                            lastName: chat.last_name || from?.last_name,
-                            lastMessage: update.message.text?.substring(0, 100),
-                            lastMessageDate: new Date(update.message.date * 1000).toISOString(),
+                            chatType: chat.type || 'unknown',
+                            username: chat.username || from?.username || null,
+                            firstName: chat.first_name || from?.first_name || null,
+                            lastName: chat.last_name || from?.last_name || null,
+                            lastMessage: update.message.text ? update.message.text.substring(0, 100) : null,
+                            lastMessageDate: update.message.date 
+                                ? new Date(update.message.date * 1000).toISOString() 
+                                : null,
                         });
                     }
                 }

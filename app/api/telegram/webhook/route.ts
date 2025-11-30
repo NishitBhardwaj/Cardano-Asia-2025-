@@ -12,13 +12,19 @@ const TELEGRAM_API_BASE = 'https://api.telegram.org';
  */
 export async function POST(request: NextRequest) {
     try {
-        const body = await request.json();
+        let body;
+        try {
+            body = await request.json();
+        } catch (error) {
+            console.error('Failed to parse webhook body:', error);
+            return NextResponse.json({ ok: true, error: 'Invalid JSON' });
+        }
 
         // Handle incoming message
         if (body.message) {
             const { chat, text, from } = body.message;
 
-            if (!text) {
+            if (!text || !chat?.id) {
                 return NextResponse.json({ ok: true });
             }
 
@@ -28,6 +34,10 @@ export async function POST(request: NextRequest) {
             if (sessionMatch) {
                 const [, sessionId, replyText] = sessionMatch;
 
+                if (!sessionId || !replyText?.trim()) {
+                    return NextResponse.json({ ok: true, error: 'Invalid session format' });
+                }
+
                 // Add agent message to session
                 appendMessage(sessionId, {
                     id: Date.now().toString(),
@@ -36,8 +46,13 @@ export async function POST(request: NextRequest) {
                     timestamp: Date.now(),
                 });
 
-                // Optional: Confirm delivery to agent
-                await sendMessage(chat.id, `✅ Reply sent to session ${sessionId.substring(0, 8)}...`);
+                // Optional: Confirm delivery to agent (with error handling)
+                try {
+                    await sendMessage(chat.id, `✅ Reply sent to session ${sessionId.substring(0, 8)}...`);
+                } catch (error) {
+                    // Log but don't fail the webhook
+                    console.error('Failed to send confirmation to agent:', error);
+                }
             } else {
                 // Message doesn't match format, log for debugging
                 console.log('Received Telegram message without session format:', {
@@ -81,7 +96,29 @@ export async function GET(request: NextRequest) {
             const response = await fetch(
                 `${TELEGRAM_API_BASE}/bot${token}/setWebhook?url=${encodeURIComponent(webhookUrl)}`
             );
-            const data = await response.json();
+            
+            if (!response.ok) {
+                return NextResponse.json(
+                    {
+                        success: false,
+                        error: `Telegram API error: ${response.status} ${response.statusText}`,
+                    },
+                    { status: response.status }
+                );
+            }
+            
+            let data;
+            try {
+                data = await response.json();
+            } catch (error) {
+                return NextResponse.json(
+                    {
+                        success: false,
+                        error: 'Failed to parse Telegram API response',
+                    },
+                    { status: 500 }
+                );
+            }
 
             return NextResponse.json({
                 success: data.ok,

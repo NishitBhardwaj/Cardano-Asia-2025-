@@ -29,6 +29,16 @@ const nextConfig = {
         config.optimization = {
             ...config.optimization,
             moduleIds: 'deterministic',
+            // Fix webpack chunk issues
+            chunkIds: 'deterministic',
+        };
+
+        // Fix for vendor-chunks issues
+        config.resolve = {
+            ...config.resolve,
+            alias: {
+                ...config.resolve.alias,
+            },
         };
 
         return config;

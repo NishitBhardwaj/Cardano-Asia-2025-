@@ -5,24 +5,35 @@ const BREVO_API_URL = 'https://api.brevo.com/v3/smtp/email';
 
 export async function POST(request: NextRequest) {
     try {
-        // Check if API key is configured
-        if (!BREVO_API_KEY) {
-            console.warn('[Email] BREVO_API_KEY not configured, falling back to console output');
-            const { email, otp, type } = await request.json();
-            console.log(`[Email OTP] ${type} for ${email}: ${otp}`);
-            return NextResponse.json({
-                success: true,
-                message: 'OTP generated (email service not configured - check console)',
-            });
+        // Parse request body once
+        let body;
+        try {
+            body = await request.json();
+        } catch (error) {
+            return NextResponse.json(
+                { success: false, message: 'Invalid request body' },
+                { status: 400 }
+            );
         }
+        
+        const { email, otp, type } = body;
 
-        const { email, otp, type } = await request.json();
-
+        // Validate required fields
         if (!email || !otp || !type) {
             return NextResponse.json(
                 { success: false, message: 'Missing required fields' },
                 { status: 400 }
             );
+        }
+
+        // Check if API key is configured
+        if (!BREVO_API_KEY) {
+            console.warn('[Email] BREVO_API_KEY not configured, falling back to console output');
+            console.log(`[Email OTP] ${type} for ${email}: ${otp}`);
+            return NextResponse.json({
+                success: true,
+                message: 'OTP generated (email service not configured - check console)',
+            });
         }
 
         const subject = type === 'password_reset' 

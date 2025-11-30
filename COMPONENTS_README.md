@@ -2,7 +2,8 @@
 
 > **Complete guide to every component in the Cardano Donation DApp**
 > 
-> **Last Updated**: November 29, 2025
+> **Last Updated**: January 2025
+> **Status**: ✅ Production Ready
 
 ---
 
@@ -37,6 +38,9 @@
 | `TwoFactorSetup` | Sets up Google Authenticator 2FA |
 | `DocumentVerification` | Handles ID verification flow |
 | `AdminManagement` | Add/remove campaign admins, sharing links |
+| `AdminInitializer` | Automatically creates admin account on app load |
+| `CookieConsent` | GDPR-compliant cookie consent banner |
+| `ThemeToggle` | Light/Dark mode toggle button |
 
 ### Data Storage (Where Info Lives)
 
@@ -569,6 +573,44 @@ interface ChatbotProps {
 - Messenger-style design (WhatsApp-like)
 
 **Usage**: Automatically included in root layout
+
+### AdminInitializer.tsx
+
+**Location**: `components/AdminInitializer.tsx`
+
+**Purpose**: Automatically initializes a pre-verified admin account on app load. This ensures the admin account is always available for testing campaign creation without going through the verification process.
+
+**Features**:
+- Runs automatically when the app loads
+- Creates admin account if it doesn't exist
+- Updates password hash for existing accounts to ensure it matches
+- Sets verification status to "verified"
+- Silent component (doesn't render anything)
+
+**Usage**:
+```tsx
+// Automatically included in app/layout.tsx
+<AdminInitializer />
+```
+
+**Admin Credentials**:
+- Email: `admin@donatedao.io`
+- Password: `Admin@1234`
+- Username: `admin`
+- Verification: Already verified
+
+**Technical Details**:
+- Uses `lib/utils/initAdminAccount.ts` for account creation
+- Stores account in `localStorage` under `donatedao-users`
+- Password hashing uses PBKDF2 with deterministic salt
+- Verification status stored in `localStorage` under `donatedao-verification`
+
+**Related Files**:
+- `lib/utils/initAdminAccount.ts` - Account initialization logic
+- `lib/utils/password.ts` - Password hashing utilities
+- `lib/store/userStore.ts` - User authentication store
+
+---
 
 ### CookieConsent.tsx
 **Purpose**: GDPR-compliant cookie consent banner

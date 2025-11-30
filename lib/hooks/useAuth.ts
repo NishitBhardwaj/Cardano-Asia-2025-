@@ -281,10 +281,24 @@ export function useAuth(): UseAuthReturn {
         }
     }, [walletState]);
 
+    // Sync walletAddress from profile if user is authenticated but wallet not connected via Mesh SDK
+    // This allows email-authenticated users with walletAddress in profile to use it
+    useEffect(() => {
+        if (isAuthenticated && profile?.walletAddress && !walletAddress && !walletState?.connected) {
+            // Profile has walletAddress but Mesh SDK wallet is not connected
+            // This is fine - we can use profile.walletAddress for campaign creation
+            // But we don't set walletAddress state here to avoid confusion with Mesh SDK connection
+            // The create page will use profile.walletAddress as fallback
+        }
+    }, [isAuthenticated, profile, walletAddress, walletState]);
+
     // Return default state during SSR
     if (!mounted) {
         return defaultAuthState;
     }
+
+    // Get effective wallet address (from Mesh SDK connection or profile)
+    const effectiveWalletAddress = walletAddress || (profile?.walletAddress || null);
 
     return {
         // Connection State
@@ -293,7 +307,7 @@ export function useAuth(): UseAuthReturn {
         isLoading: isLoading || storeLoading,
         
         // User Data
-        walletAddress,
+        walletAddress: effectiveWalletAddress, // Return effective wallet address
         profile,
         
         // Wallet Info

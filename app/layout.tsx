@@ -20,6 +20,15 @@ const CookieConsent = dynamic(() => import("@/components/CookieConsent"), {
   ssr: false,
 });
 
+// Dynamically import AdminInitializer to automatically create admin account
+const AdminInitializer = dynamic(
+  () => import("@/components/AdminInitializer").then((mod) => ({ default: mod.AdminInitializer })),
+  {
+    ssr: false,
+    loading: () => null,
+  }
+);
+
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
@@ -53,6 +62,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
       <body className={`${inter.className} min-h-screen`} suppressHydrationWarning>
+        <AdminInitializer />
         {children}
         <ChatbotButton />
         <CookieConsent />

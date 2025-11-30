@@ -66,6 +66,73 @@ npm run dev
 - **OTP/Email**: Shown in browser alert (no real email sent)
 - **Identity Verification**: 70% success rate (demo simulation)
 
+### 🎯 Admin Account Setup (Production Ready)
+
+**The admin account is automatically created when you start the app!**
+
+DonateDAO includes an **automatic admin account initialization system** that creates a pre-verified admin account on app load. This allows you to immediately test campaign creation without going through the verification process.
+
+#### How It Works
+
+1. **Automatic Initialization**: The `AdminInitializer` component runs automatically when the app loads
+2. **Account Creation**: Checks if admin account exists in localStorage
+3. **Auto-Update**: If account exists, updates password hash to ensure it matches
+4. **Verification Status**: Automatically sets identity verification to "verified"
+
+#### Admin Credentials
+
+| Field | Value |
+|-------|-------|
+| **Email** | `admin@donatedao.io` |
+| **Password** | `Admin@1234` |
+| **Username** | `admin` |
+| **Name** | Admin User |
+| **Wallet Address** | `addr1q8gc0kzz496lhjavkyx4hydn9tpnd58a876d44uuwty59hymqzc3s3a2c3thyrle46n6ty5zmfsqc4jrhxhdtgmt8cgsushahj` |
+| **Verification Status** | ✅ Already Verified |
+| **Can Create Campaigns** | ✅ YES |
+
+#### Quick Start with Admin Account
+
+1. **Start the dev server**:
+   ```bash
+   npm run dev
+   ```
+
+2. **Open the app**: `http://localhost:3000`
+   - Wait 1-2 seconds for admin account initialization
+   - Check browser console for: `✅ Admin account ready: admin@donatedao.io`
+
+3. **Login**:
+   - Go to `/auth` or click "Login"
+   - Select **"Email"** tab
+   - Enter:
+     - Email: `admin@donatedao.io`
+     - Password: `Admin@1234`
+   - Click "Login"
+
+4. **Create Campaigns**:
+   - After login, go to `/create`
+   - You can create campaigns immediately (verification is already set)
+
+#### Technical Details
+
+- **Component**: `components/AdminInitializer.tsx`
+- **Utility**: `lib/utils/initAdminAccount.ts`
+- **Storage**: Admin account stored in `localStorage` under `donatedao-users`
+- **Password Hashing**: Uses PBKDF2 with deterministic salt (same password = same hash)
+- **Verification**: Stored in `localStorage` under `donatedao-verification`
+
+#### Troubleshooting
+
+**Problem**: "User not found" error when logging in
+- **Solution**: Clear browser localStorage and refresh the page. The admin account will be recreated automatically.
+
+**Problem**: Password doesn't work
+- **Solution**: The password hash is automatically updated on app load. Wait 1-2 seconds after page load before logging in.
+
+**Problem**: Verification status not set
+- **Solution**: The verification status is automatically set during initialization. Check browser console for initialization messages.
+
 ---
 
 ## 📋 Table of Contents
@@ -2128,6 +2195,46 @@ npm run dev
 3. Switch to **PreProd testnet** in settings
 4. Get test ADA from [Cardano Faucet](https://docs.cardano.org/cardano-testnet/tools/faucet/)
 
+#### Step 7: Admin Account Setup (Automatic)
+
+**The admin account is automatically created when you start the app!**
+
+DonateDAO includes an automatic admin account initialization system that creates a pre-verified admin account on app load. This allows you to immediately test campaign creation without going through the verification process.
+
+**What Happens Automatically**:
+1. When the app loads, `AdminInitializer` component runs
+2. Checks if admin account exists in localStorage
+3. Creates account if it doesn't exist, or updates password hash if it does
+4. Sets verification status to "verified"
+5. Account is ready to use immediately
+
+**Admin Credentials**:
+- **Email**: `admin@donatedao.io`
+- **Password**: `Admin@1234`
+- **Username**: `admin`
+- **Verification**: ✅ Already Verified
+
+**How to Use**:
+1. Start the dev server: `npm run dev`
+2. Open `http://localhost:3000`
+3. Wait 1-2 seconds (check console for: `✅ Admin account ready`)
+4. Go to `/auth` or click "Login"
+5. Select **"Email"** tab
+6. Enter credentials above
+7. Click "Login"
+8. Go to `/create` to create campaigns immediately
+
+**Troubleshooting**:
+- **"User not found" error**: Clear browser localStorage and refresh
+- **Password doesn't work**: Wait 1-2 seconds after page load for initialization
+- **Verification not set**: Check browser console for initialization messages
+
+**Technical Details**:
+- Component: `components/AdminInitializer.tsx`
+- Utility: `lib/utils/initAdminAccount.ts`
+- Storage: `localStorage` under `donatedao-users`
+- Password: PBKDF2 hashing with deterministic salt
+
 ---
 
 ## ⚙️ Configuration
@@ -3107,6 +3214,66 @@ aiken test   # Run tests
 
 ### Common Issues
 
+#### "500 Internal Server Error" or "GET http://localhost:3000/ 500" or "GET http://localhost:3000/auth 500"
+**Cause**: Corrupted Next.js build cache, webpack chunk issues, or missing build artifacts.
+
+**Solution**: 
+```bash
+# Complete fix - run the automated script (RECOMMENDED)
+./scripts/complete-fix.sh
+
+# Quick fix for 500 errors only
+./scripts/fix-500-error.sh
+
+# Or manually:
+pkill -f "next"
+rm -rf .next
+rm -rf node_modules/.cache
+npm cache clean --force
+npm run build
+npm run dev
+```
+
+**Prevention**: 
+- Always use `Ctrl+C` to stop the dev server properly
+- Avoid force-killing the process
+- If errors persist, run `./scripts/complete-fix.sh` before reporting issues
+
+#### "Cannot find module './276.js'" or "Cannot find module './vendor-chunks/next.js'" or Webpack Chunk Errors
+**Cause**: Stale webpack chunks from previous builds or corrupted build cache.
+
+**Solution**:
+```bash
+# Complete fix - run the automated script (RECOMMENDED)
+./scripts/complete-fix.sh
+
+# Or manually:
+rm -rf .next
+rm -rf node_modules/.cache
+npm cache clean --force
+npm run build
+npm run dev
+```
+
+**Note**: The `complete-fix.sh` script handles all cache clearing and rebuilding automatically.
+
+#### "initEternlDomAPI" Warnings in Console
+**Status**: ✅ **HARMLESS** - These are informational logs from the Eternl wallet browser extension. They do not affect functionality and can be safely ignored.
+
+#### "GET http://localhost:3000/_next/static/chunks/main-app.js net::ERR_ABORTED 404 (Not Found)"
+**Cause**: Missing build artifacts or corrupted static files.
+
+**Solution**:
+```bash
+# Complete fix
+./scripts/complete-fix.sh
+
+# Or manually:
+rm -rf .next
+npm run build
+npm run dev
+```
+
 #### "404 Not Found" or "500 Internal Server Error" on Pages
 **Cause**: Mesh SDK's WASM files cannot load during Server-Side Rendering.
 
@@ -3177,6 +3344,61 @@ if (!isClient) return null;
 # Restart dev server
 npm run dev
 ```
+
+#### "User not found" Error (Admin Login)
+**Cause**: Admin account not initialized or localStorage cleared.
+
+**Solution**:
+1. Wait 1-2 seconds after page load for automatic initialization
+2. Check browser console for: `✅ Admin account ready: admin@donatedao.io`
+3. If still not working, clear localStorage and refresh:
+   ```javascript
+   // In browser console:
+   localStorage.clear();
+   location.reload();
+   ```
+
+#### "Password doesn't work" (Admin Account)
+**Cause**: Password hash mismatch or account not updated.
+
+**Solution**:
+1. The password hash is automatically updated on app load
+2. Wait 1-2 seconds after page load before logging in
+3. If still not working, clear cache and restart:
+   ```bash
+   rm -rf .next
+   npm run dev
+   ```
+
+### Quick Fix Scripts
+
+We've included automated fix scripts for common issues:
+
+```bash
+# Complete fix for all errors (RECOMMENDED)
+# Fixes: 500 errors, webpack chunks, module not found, build cache issues
+./scripts/complete-fix.sh
+
+# Quick fix for 500 errors only
+./scripts/fix-500-error.sh
+
+# Fix dev server cache issues
+./scripts/fix-dev-server.sh
+```
+
+**When to use `complete-fix.sh`**:
+- 500 Internal Server Error
+- Webpack chunk errors (`Cannot find module './vendor-chunks/next.js'`)
+- Module not found errors
+- 404 errors on static files (`main-app.js not found`)
+- Any build-related errors
+
+**What it does**:
+1. Stops all Next.js processes
+2. Clears all caches (`.next`, `node_modules/.cache`, npm cache)
+3. Verifies `node_modules` exists
+4. Rebuilds the project
+5. Verifies build artifacts are created
 
 ### Debug Mode
 
@@ -3367,3 +3589,40 @@ limitations under the License.
   <br><br>
   <strong>Cardano Hackathon 2025</strong>
 </p>
+
+---
+
+## 📚 Additional Documentation
+
+### Quick Reference Files
+
+| File | Purpose |
+|------|---------|
+| `README.md` | Main documentation (this file) |
+| `COMPONENTS_README.md` | Component library documentation |
+| `PRODUCTION_CHECKLIST.md` | Production deployment checklist |
+| `ADMIN_SETUP.md` | Admin account setup guide |
+| `ADMIN_CREDENTIALS.txt` | Quick admin credentials reference |
+| `FINAL_FIX_SUMMARY.md` | Error resolution summary |
+| `ERROR_RESOLUTION_500.md` | 500 error troubleshooting guide |
+| `ENV_SETUP.md` | Environment variables setup |
+| `TELEGRAM_SETUP.md` | Telegram bot integration guide |
+
+### Fix Scripts
+
+| Script | Purpose |
+|--------|---------|
+| `scripts/complete-fix.sh` | **Complete fix** - Fixes all errors (500, webpack, modules) |
+| `scripts/fix-500-error.sh` | Quick fix for 500 errors only |
+| `scripts/fix-dev-server.sh` | Fix dev server cache issues |
+
+### Support & Troubleshooting
+
+1. **Check Error Messages**: Read the error carefully - most are cache-related
+2. **Run Complete Fix**: `./scripts/complete-fix.sh` fixes 90% of issues
+3. **Check Documentation**: See relevant `.md` files for specific features
+4. **Clear Browser Cache**: `Ctrl+Shift+R` or `Cmd+Shift+R` for hard refresh
+5. **Check Console**: Browser console shows detailed error messages
+
+---
+

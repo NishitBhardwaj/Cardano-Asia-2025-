@@ -10,7 +10,16 @@ import { ensureSession, appendMessage } from '@/lib/store/telegramSessions';
  */
 export async function POST(request: NextRequest) {
     try {
-        const body = await request.json();
+        let body;
+        try {
+            body = await request.json();
+        } catch (error) {
+            return NextResponse.json(
+                { success: false, error: 'Invalid request body' },
+                { status: 400 }
+            );
+        }
+        
         const { sessionId, userMessage, userInfo } = body;
 
         if (!sessionId) {

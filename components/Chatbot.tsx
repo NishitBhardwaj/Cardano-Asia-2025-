@@ -373,8 +373,9 @@ export default function Chatbot({ isOpen, onClose }: ChatbotProps) {
 
         // If connected to agent, send message to Telegram
         if (connectedToAgent && sessionId) {
+            setIsTyping(false);
             try {
-                await fetch('/api/telegram/connect', {
+                const response = await fetch('/api/telegram/connect', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -386,10 +387,41 @@ export default function Chatbot({ isOpen, onClose }: ChatbotProps) {
                         },
                     }),
                 });
+
+                const data = await response.json();
+                
+                if (!response.ok || !data.success) {
+                    // Show error in chat
+                    const errorMsg: Message = {
+                        id: (Date.now() + 1).toString(),
+                        text: data.error || 'Failed to send message. Please try again.',
+                        sender: 'bot',
+                        timestamp: new Date(),
+                    };
+                    setMessages(prev => [...prev, errorMsg]);
+                    
+                    // If it's a configuration error, show instructions
+                    if (data.instructions) {
+                        const instructionsMsg: Message = {
+                            id: (Date.now() + 2).toString(),
+                            text: `Setup Instructions:\n${data.instructions.join('\n')}`,
+                            sender: 'bot',
+                            timestamp: new Date(),
+                        };
+                        setMessages(prev => [...prev, instructionsMsg]);
+                    }
+                }
+                // Message already added to chat above, just send to Telegram
             } catch (error) {
                 console.error('Failed to send message to agent:', error);
+                const errorMsg: Message = {
+                    id: (Date.now() + 1).toString(),
+                    text: 'Failed to send message to agent. Please check your connection and try again.',
+                    sender: 'bot',
+                    timestamp: new Date(),
+                };
+                setMessages(prev => [...prev, errorMsg]);
             }
-            setIsTyping(false);
             return; // Don't process with AI when connected to agent
         }
 
@@ -509,13 +541,25 @@ export default function Chatbot({ isOpen, onClose }: ChatbotProps) {
                 };
                 setMessages(prev => [...prev, agentMessage]);
             } else {
+                // Show error message in chat
                 const errorMessage: Message = {
                     id: (Date.now() + 2).toString(),
-                    text: `⚠️ ${data.error || data.message || 'Connection issue'}. ${data.instructions ? '\n\n' + data.instructions.join('\n') : ''}`,
+                    text: `⚠️ ${data.error || data.message || 'Connection issue'}. ${data.instructions ? '\n\n' + data.instructions.join('\n') : 'Please contact @DonateDAOSupport_bot directly on Telegram.'}`,
                     sender: 'bot',
                     timestamp: new Date(),
                 };
                 setMessages(prev => [...prev, errorMessage]);
+                
+                // If it's a configuration error, provide helpful link
+                if (data.error?.includes('TELEGRAM_AGENT_CHAT_ID') || data.error?.includes('not configured')) {
+                    const helpMessage: Message = {
+                        id: (Date.now() + 3).toString(),
+                        text: '💡 Quick Setup:\n1. Visit /api/telegram/get-chat-id to get your chat ID\n2. Add it to .env.local as TELEGRAM_AGENT_CHAT_ID\n3. Restart the server',
+                        sender: 'bot',
+                        timestamp: new Date(),
+                    };
+                    setMessages(prev => [...prev, helpMessage]);
+                }
             }
         } catch (error: any) {
             const errorMessage: Message = {

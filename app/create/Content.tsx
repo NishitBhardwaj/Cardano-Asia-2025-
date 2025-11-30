@@ -41,22 +41,42 @@ function CreatePageInner() {
         }
     }, [isAuthenticated, router, mounted, _hasHydrated]);
 
-    // Check verification status
+    // Check verification status - check both email and wallet address
     useEffect(() => {
         if (profile) {
-            const userId = profile.walletAddress || profile.email || '';
-            const verified = isUserVerified(userId);
+            // Check verification for both email and wallet address
+            // This ensures it works whether user logged in with email or wallet
+            const emailVerified = profile.email ? isUserVerified(profile.email) : false;
+            const walletVerified = profile.walletAddress ? isUserVerified(profile.walletAddress) : false;
+            const verified = emailVerified || walletVerified;
             setIsVerified(verified);
+            
+            if (!verified) {
+                console.log('[Create] Verification check:', {
+                    email: profile.email,
+                    walletAddress: profile.walletAddress,
+                    emailVerified,
+                    walletVerified,
+                });
+            }
         }
     }, [profile]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!walletAddress) return;
+        
+        // Use walletAddress from useAuth hook, or fallback to profile.walletAddress
+        // This allows admin to create campaigns even if wallet isn't connected via Mesh SDK
+        const effectiveWalletAddress = walletAddress || profile?.walletAddress;
+        
+        if (!effectiveWalletAddress) {
+            alert('Please connect your wallet to create a campaign');
+            return;
+        }
 
         setIsSubmitting(true);
         try {
-            if (!walletAddress || !profile) {
+            if (!effectiveWalletAddress || !profile) {
                 throw new Error('Wallet not connected');
             }
 
@@ -69,7 +89,7 @@ function CreatePageInner() {
                 deadline: formData.deadline,
                 createdAt: new Date().toISOString(),
                 status: 'active',
-                creatorAddress: walletAddress,
+                creatorAddress: effectiveWalletAddress, // Use effective wallet address
                 creatorName: profile.displayName,
                 creatorUsername: profile.username || undefined,
                 image: formData.image || '',
@@ -153,6 +173,9 @@ function CreatePageInner() {
         );
     }
 
+    // Get effective wallet address (from useAuth or profile)
+    const effectiveWalletAddress = walletAddress || profile?.walletAddress;
+
     return (
         <div className="min-h-screen bg-background">
             <Header />
@@ -161,6 +184,36 @@ function CreatePageInner() {
                 <div className="max-w-2xl mx-auto">
                     <h1 className="text-5xl font-bold mb-4">Create Campaign</h1>
                     <p className="text-xl text-foreground/70 mb-8">Launch your fundraising campaign on Cardano</p>
+
+                    {/* Wallet Connection Notice */}
+                    {!walletAddress && profile?.walletAddress && (
+                        <div className="mb-6 glass p-4 rounded-xl border border-primary/30 bg-primary/5">
+                            <div className="flex items-start gap-3">
+                                <span className="text-2xl">💡</span>
+                                <div className="flex-1">
+                                    <p className="font-semibold text-sm mb-1">Wallet Address Available</p>
+                                    <p className="text-xs text-foreground/70">
+                                        Your wallet address is linked to your account. You can create campaigns using this address.
+                                        {!walletAddress && ' To connect your wallet for transactions, use the &quot;Connect Wallet&quot; button in the header.'}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {!effectiveWalletAddress && (
+                        <div className="mb-6 glass p-4 rounded-xl border border-yellow-500/30 bg-yellow-500/5">
+                            <div className="flex items-start gap-3">
+                                <span className="text-2xl">⚠️</span>
+                                <div className="flex-1">
+                                    <p className="font-semibold text-sm mb-1">Wallet Required</p>
+                                    <p className="text-xs text-foreground/70">
+                                        Please connect your wallet using the &quot;Connect Wallet&quot; button in the header to create a campaign.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     <form onSubmit={handleSubmit} className="glass p-8 rounded-2xl space-y-6">
                         <div>
