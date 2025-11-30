@@ -186,23 +186,6 @@ DonateDAO addresses all these issues:
 | **Rank System** | Bronze → Silver → Gold → Platinum → Diamond |
 | **Donation Streaks** | Track consecutive months of giving |
 | **Email Verification** | Secure email verification with verification links |
-| **Profile Management** | Edit profile, link wallet to email account |
-
-### 6. Authentication System
-| Feature | Description |
-|---------|-------------|
-| **Wallet Authentication** | Connect Cardano wallet (Nami, Eternl, etc.) for Web3 login |
-| **Email Authentication** | Traditional email/password signup and login |
-| **Email Verification** | OTP-based email verification system |
-| **Password Security** | SHA-256 hashing with Web Crypto API |
-| **Forgot Password** | OTP-based password reset (simulated email) |
-| **Two-Factor Authentication** | Optional TOTP-based 2FA with Google Authenticator |
-| **Account Linking** | Link wallet to email account or vice versa |
-| **Custom Captcha** | System-generated captcha for signup protection |
-
-### 7. Security Features
-| Feature | Description |
-|---------|-------------|
 | **Two-Factor Authentication (2FA)** | Optional TOTP-based 2FA compatible with Google Authenticator, Authy, etc. |
 | **2FA Setup QR Codes** | Scan QR code with authenticator app to enable 2FA |
 | **Backup Codes** | 8 one-time backup codes for 2FA recovery (save securely!) |
