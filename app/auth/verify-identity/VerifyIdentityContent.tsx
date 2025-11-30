@@ -1,31 +1,47 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { MeshProvider } from '@meshsdk/react';
 import useAuth from '@/lib/hooks/useAuth';
+import { useUserStore } from '@/lib/store/userStore';
 import Header from '@/components/Header';
 import DocumentVerification from '@/components/DocumentVerification';
 
 function VerifyIdentityInner() {
     const router = useRouter();
-    const { isAuthenticated, profile } = useAuth();
+    const { isAuthenticated, profile, isLoading } = useAuth();
+    const { _hasHydrated } = useUserStore();
+    const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
-        if (!isAuthenticated) {
+        setMounted(true);
+    }, []);
+
+    // Wait for hydration and mount before checking auth
+    useEffect(() => {
+        if (!mounted || !_hasHydrated) return;
+        
+        if (!isLoading && !isAuthenticated) {
             router.push('/auth');
         }
-    }, [isAuthenticated, router]);
+    }, [mounted, _hasHydrated, isAuthenticated, isLoading, router]);
 
     const handleVerified = () => {
         alert('Identity verified successfully! You can now create campaigns.');
         router.push('/create');
     };
 
-    if (!isAuthenticated || !profile) {
+    // Show loading while checking auth state
+    if (!mounted || !_hasHydrated || isLoading || !isAuthenticated || !profile) {
         return (
             <div className="min-h-screen bg-background flex items-center justify-center">
-                <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                <div className="text-center space-y-4">
+                    <div className="w-16 h-16 gradient-primary rounded-2xl flex items-center justify-center mx-auto animate-pulse">
+                        <span className="text-white font-bold text-3xl">₳</span>
+                    </div>
+                    <p className="text-foreground/60">Loading...</p>
+                </div>
             </div>
         );
     }

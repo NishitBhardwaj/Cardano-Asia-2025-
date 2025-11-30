@@ -29,16 +29,23 @@ export default function DocumentVerification({ userId, onVerified, onClose }: Do
         const data = getVerificationData(userId);
         setVerificationData(data);
 
-        // If already verified, inform parent
+        // If already verified, inform parent (but only after component is mounted)
         if (data?.status === 'verified') {
-            onVerified();
+            // Delay to prevent immediate redirect on page load
+            const timer = setTimeout(() => {
+                onVerified();
+            }, 500);
+            return () => clearTimeout(timer);
         }
 
         // If under review, check status
         if (data?.status === 'under_review') {
             const reviewResult = checkUtilityBillReview(userId);
             if (reviewResult.status === 'verified') {
-                onVerified();
+                const timer = setTimeout(() => {
+                    onVerified();
+                }, 500);
+                return () => clearTimeout(timer);
             } else if (reviewResult.status !== 'under_review') {
                 setVerificationData(getVerificationData(userId));
             }
