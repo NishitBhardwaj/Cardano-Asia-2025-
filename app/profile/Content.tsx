@@ -492,7 +492,13 @@ function ProfilePageInner() {
                                 <div className="space-y-2">
                                     <p className="glass px-4 py-3 rounded-lg font-mono text-xs sm:text-sm break-all">{walletAddress}</p>
                                     <button
-                                        onClick={disconnectWallet}
+                                        onClick={() => {
+                                            disconnectWallet();
+                                            // Use window.location for a hard redirect
+                                            setTimeout(() => {
+                                                window.location.href = '/';
+                                            }, 100);
+                                        }}
                                         className="w-full bg-red-500/20 border border-red-500/50 text-red-500 px-4 py-2.5 rounded-lg font-medium hover:bg-red-500/30 transition-colors text-sm"
                                     >
                                         Disconnect Wallet

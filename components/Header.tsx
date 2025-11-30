@@ -48,7 +48,10 @@ function HeaderContent({ showNav = true, variant = 'default' }: HeaderProps) {
     const handleDisconnect = () => {
         disconnectWallet();
         setShowProfileMenu(false);
-        router.push('/');
+        // Use window.location for a hard redirect to clear all state
+        setTimeout(() => {
+            window.location.href = '/';
+        }, 100);
     };
 
     const [showMobileMenu, setShowMobileMenu] = useState(false);
