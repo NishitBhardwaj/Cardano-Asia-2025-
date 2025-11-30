@@ -189,17 +189,35 @@ const knowledgeBase: { question: string[]; answer: string; steps?: string[] }[] 
 
 const CHAT_STORAGE_KEY = 'donatedao-chat-history';
 const USER_DATA_KEY = 'donatedao-chat-user';
+const SESSION_ID_KEY = 'donatedao-telegram-session';
 
 export default function Chatbot({ isOpen, onClose }: ChatbotProps) {
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState('');
     const [isTyping, setIsTyping] = useState(false);
     const [connectingToAgent, setConnectingToAgent] = useState(false);
+    const [connectedToAgent, setConnectedToAgent] = useState(false);
+    const [sessionId, setSessionId] = useState<string>('');
+    const [lastServerTimestamp, setLastServerTimestamp] = useState<number | null>(null);
     const [userData, setUserData] = useState<UserData | null>(null);
     const [showUserForm, setShowUserForm] = useState(false);
     const [userFormData, setUserFormData] = useState({ email: '', username: '' });
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
+    const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Initialize sessionId on mount
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            // Generate or load sessionId
+            let storedSessionId = localStorage.getItem(SESSION_ID_KEY);
+            if (!storedSessionId) {
+                storedSessionId = crypto.randomUUID();
+                localStorage.setItem(SESSION_ID_KEY, storedSessionId);
+            }
+            setSessionId(storedSessionId);
+        }
+    }, []);
 
     // Load chat history and user data from localStorage
     useEffect(() => {
@@ -214,6 +232,14 @@ export default function Chatbot({ isOpen, onClose }: ChatbotProps) {
                     timestamp: new Date(m.timestamp)
                 }));
                 setMessages(messagesWithDates);
+                
+                // Check if we were connected to agent
+                const wasConnected = messagesWithDates.some((m: any) => 
+                    m.sender === 'agent' || (m.text && m.text.includes('connected to a human agent'))
+                );
+                if (wasConnected) {
+                    setConnectedToAgent(true);
+                }
             } else {
                 // Initial greeting
                 setMessages([{
@@ -249,6 +275,63 @@ export default function Chatbot({ isOpen, onClose }: ChatbotProps) {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
+    // Poll for agent messages when connected
+    useEffect(() => {
+        if (!connectedToAgent || !sessionId) {
+            // Clear polling if not connected
+            if (pollingIntervalRef.current) {
+                clearInterval(pollingIntervalRef.current);
+                pollingIntervalRef.current = null;
+            }
+            return;
+        }
+
+        // Start polling every 3 seconds
+        pollingIntervalRef.current = setInterval(async () => {
+            try {
+                const since = lastServerTimestamp || 0;
+                const response = await fetch(
+                    `/api/telegram/messages?sessionId=${encodeURIComponent(sessionId)}&since=${since}`
+                );
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.messages && data.messages.length > 0) {
+                        // Add new agent messages to chat
+                        const newMessages: Message[] = data.messages
+                            .filter((msg: any) => msg.role === 'agent')
+                            .map((msg: any) => ({
+                                id: msg.id,
+                                text: msg.text,
+                                sender: 'agent' as const,
+                                timestamp: new Date(msg.timestamp),
+                            }));
+
+                        if (newMessages.length > 0) {
+                            setMessages(prev => [...prev, ...newMessages]);
+                            
+                            // Update last timestamp
+                            const latestTimestamp = Math.max(
+                                ...data.messages.map((m: any) => m.timestamp)
+                            );
+                            setLastServerTimestamp(latestTimestamp);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error polling for messages:', error);
+            }
+        }, 3000); // Poll every 3 seconds
+
+        // Cleanup on unmount or when disconnected
+        return () => {
+            if (pollingIntervalRef.current) {
+                clearInterval(pollingIntervalRef.current);
+                pollingIntervalRef.current = null;
+            }
+        };
+    }, [connectedToAgent, sessionId, lastServerTimestamp]);
+
     const saveUserData = (data: UserData) => {
         const fullData = { ...data, collectedAt: new Date().toISOString() };
         setUserData(fullData);
@@ -282,14 +365,37 @@ export default function Chatbot({ isOpen, onClose }: ChatbotProps) {
         };
 
         setMessages(prev => [...prev, userMessage]);
+        const messageText = input;
         setInput('');
         setIsTyping(true);
+
+        // If connected to agent, send message to Telegram
+        if (connectedToAgent && sessionId) {
+            try {
+                await fetch('/api/telegram/connect', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sessionId,
+                        userMessage: messageText,
+                        userInfo: {
+                            email: userData?.email,
+                            username: userData?.username,
+                        },
+                    }),
+                });
+            } catch (error) {
+                console.error('Failed to send message to agent:', error);
+            }
+            setIsTyping(false);
+            return; // Don't process with AI when connected to agent
+        }
 
         // Simulate typing delay
         await new Promise(resolve => setTimeout(resolve, 500));
 
         // Try to find answer in knowledge base
-        const result = findAnswer(input);
+        const result = findAnswer(messageText);
 
         if (result) {
             // Add main answer
@@ -354,11 +460,16 @@ export default function Chatbot({ isOpen, onClose }: ChatbotProps) {
     };
 
     const handleConnectToAgent = async () => {
+        if (!sessionId) {
+            alert('Session not initialized. Please refresh the page.');
+            return;
+        }
+
         setConnectingToAgent(true);
         
         const connectingMessage: Message = {
             id: (Date.now() + 1).toString(),
-            text: 'Connecting you to Sumanth...',
+            text: 'Connecting you to a human agent...',
             sender: 'bot',
             timestamp: new Date(),
         };
@@ -373,11 +484,11 @@ export default function Chatbot({ isOpen, onClose }: ChatbotProps) {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
+                    sessionId,
                     userMessage: lastUserMessage,
                     userInfo: {
                         email: userData?.email,
                         username: userData?.username,
-                        timestamp: new Date().toISOString(),
                     },
                 }),
             });
@@ -385,9 +496,12 @@ export default function Chatbot({ isOpen, onClose }: ChatbotProps) {
             const data = await response.json();
 
             if (response.ok && data.success) {
+                setConnectedToAgent(true);
+                setLastServerTimestamp(Date.now());
+                
                 const agentMessage: Message = {
                     id: (Date.now() + 2).toString(),
-                    text: '✅ Connected! Your message has been sent to Sumanth. He\'ll respond via Telegram. Start a conversation with @DonateDAOSupport_bot on Telegram.',
+                    text: '✅ You are now connected to a human agent. Please wait for their reply here.',
                     sender: 'agent',
                     timestamp: new Date(),
                 };
@@ -395,7 +509,7 @@ export default function Chatbot({ isOpen, onClose }: ChatbotProps) {
             } else {
                 const errorMessage: Message = {
                     id: (Date.now() + 2).toString(),
-                    text: `⚠️ ${data.message || 'Connection issue'}. Please contact @DonateDAOSupport_bot directly on Telegram.`,
+                    text: `⚠️ ${data.error || data.message || 'Connection issue'}. ${data.instructions ? '\n\n' + data.instructions.join('\n') : ''}`,
                     sender: 'bot',
                     timestamp: new Date(),
                 };
@@ -404,7 +518,7 @@ export default function Chatbot({ isOpen, onClose }: ChatbotProps) {
         } catch (error: any) {
             const errorMessage: Message = {
                 id: (Date.now() + 2).toString(),
-                text: `❌ Failed to connect. Please contact @DonateDAOSupport_bot directly on Telegram.`,
+                text: `❌ Failed to connect: ${error.message || 'Unknown error'}. Please try again or contact support directly.`,
                 sender: 'bot',
                 timestamp: new Date(),
             };
@@ -606,7 +720,7 @@ export default function Chatbot({ isOpen, onClose }: ChatbotProps) {
             )}
 
             {/* Connect to Agent Button */}
-            {messages.some(m => m.sender === 'bot' && (m.text.includes("connect you to") || m.text.includes("support agent"))) && (
+            {!connectedToAgent && messages.some(m => m.sender === 'bot' && (m.text.includes("connect you to") || m.text.includes("support agent"))) && (
                 <div className="px-4 py-3 border-t border-white/5">
                     <button
                         onClick={handleConnectToAgent}
@@ -621,10 +735,23 @@ export default function Chatbot({ isOpen, onClose }: ChatbotProps) {
                         ) : (
                             <>
                                 <span>👨‍💼</span>
-                                Connect to Agent Sumanth
+                                Connect to Agent
                             </>
                         )}
                     </button>
+                </div>
+            )}
+
+            {/* Connected to Agent Indicator */}
+            {connectedToAgent && (
+                <div className="px-4 py-3 border-t border-white/5 bg-accent/10">
+                    <div className="flex items-center gap-2 text-sm text-accent">
+                        <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+                        <span className="font-medium">Connected to human agent</span>
+                    </div>
+                    <p className="text-xs text-foreground/50 mt-1">
+                        Your messages are being sent to the agent. They will reply here.
+                    </p>
                 </div>
             )}
 

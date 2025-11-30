@@ -1,76 +1,107 @@
 /**
- * Telegram Bot Utility Functions
+ * Telegram Bot API Utilities
+ * 
+ * Server-side utilities for interacting with Telegram Bot API
+ * All functions must be called from server code only (API routes)
  */
 
-const TELEGRAM_BOT_TOKEN = '8405397592:AAF6SdgC5MvVBwlKUuOBO-xEcQG0aDGxlQk';
-const TELEGRAM_API_URL = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
+const TELEGRAM_API_BASE = 'https://api.telegram.org';
 
-export interface TelegramMessage {
-    chat_id: string | number;
-    text: string;
-    parse_mode?: 'HTML' | 'Markdown';
-    reply_markup?: any;
+/**
+ * Get Telegram bot token from environment variables
+ * Throws error if not configured
+ */
+export function getBotToken(): string {
+    const token = process.env.TELEGRAM_BOT_TOKEN;
+    if (!token) {
+        throw new Error('TELEGRAM_BOT_TOKEN environment variable is not set. Please configure it in .env.local');
+    }
+    return token;
 }
 
 /**
- * Send a message to a Telegram chat
+ * Get Telegram agent chat ID from environment variables
+ * Returns null if not configured
  */
-export async function sendTelegramMessage(message: TelegramMessage): Promise<boolean> {
-    try {
-        const response = await fetch(`${TELEGRAM_API_URL}/sendMessage`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(message),
-        });
+export function getAgentChatId(): string | null {
+    return process.env.TELEGRAM_AGENT_CHAT_ID || null;
+}
 
-        const data = await response.json();
-        return data.ok === true;
-    } catch (error) {
-        console.error('Error sending Telegram message:', error);
-        return false;
+/**
+ * Send a plain text message to a Telegram chat
+ */
+export async function sendMessage(chatId: string | number, text: string): Promise<void> {
+    const token = getBotToken();
+    const url = `${TELEGRAM_API_BASE}/bot${token}/sendMessage`;
+
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            chat_id: chatId,
+            text: text,
+        }),
+    });
+
+    if (!response.ok) {
+        const error = await response.json().catch(() => ({ description: 'Unknown error' }));
+        throw new Error(error.description || `Failed to send message: ${response.statusText}`);
     }
 }
 
 /**
- * Get bot updates (messages sent to the bot)
+ * Send a Markdown-formatted message to a Telegram chat
+ * Uses MarkdownV2 format
  */
-export async function getTelegramUpdates(offset?: number) {
-    try {
-        const url = `${TELEGRAM_API_URL}/getUpdates${offset ? `?offset=${offset}` : ''}`;
-        const response = await fetch(url);
-        const data = await response.json();
-        return data;
-    } catch (error) {
-        console.error('Error getting Telegram updates:', error);
-        return null;
+export async function sendMarkdownMessage(chatId: string | number, text: string): Promise<void> {
+    const token = getBotToken();
+    const url = `${TELEGRAM_API_BASE}/bot${token}/sendMessage`;
+
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            chat_id: chatId,
+            text: text,
+            parse_mode: 'MarkdownV2',
+        }),
+    });
+
+    if (!response.ok) {
+        const error = await response.json().catch(() => ({ description: 'Unknown error' }));
+        throw new Error(error.description || `Failed to send markdown message: ${response.statusText}`);
     }
 }
 
 /**
- * Set webhook URL for receiving messages
+ * Answer a callback query (for inline buttons)
  */
-export async function setTelegramWebhook(webhookUrl: string): Promise<boolean> {
-    try {
-        const response = await fetch(`${TELEGRAM_API_URL}/setWebhook?url=${encodeURIComponent(webhookUrl)}`);
-        const data = await response.json();
-        return data.ok === true;
-    } catch (error) {
-        console.error('Error setting Telegram webhook:', error);
-        return false;
+export async function answerCallbackQuery(
+    callbackQueryId: string,
+    text?: string,
+    showAlert: boolean = false
+): Promise<void> {
+    const token = getBotToken();
+    const url = `${TELEGRAM_API_BASE}/bot${token}/answerCallbackQuery`;
+
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            callback_query_id: callbackQueryId,
+            text: text,
+            show_alert: showAlert,
+        }),
+    });
+
+    if (!response.ok) {
+        const error = await response.json().catch(() => ({ description: 'Unknown error' }));
+        throw new Error(error.description || `Failed to answer callback query: ${response.statusText}`);
     }
 }
-
-/**
- * Get bot information
- */
-export async function getBotInfo() {
-    try {
-        const response = await fetch(`${TELEGRAM_API_URL}/getMe`);
-        const data = await response.json();
-        return data;
-    } catch (error) {
-        console.error('Error getting bot info:', error);
-        return null;
-    }
-}
-
